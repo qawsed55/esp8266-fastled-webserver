@@ -28,18 +28,36 @@
 
 // LED_TYPE defines the control pattern for the LEDs
 // See https://github.com/FastLED/FastLED/blob/b5874b588ade1d2639925e4e9719fa7d3c9d9e94/src/FastLED.h#L92-L119
-#define LED_TYPE                      WS2811
+
+#if !defined(LED_TYPE)
+   #define LED_TYPE                      WS2811
+#endif
 
 // COLOR_ORDER defines the order that each pixel expects the data to arrive in
 // See https://github.com/FastLED/FastLED/blob/765d4244889a692bb453cd4087af31e01c937035/src/pixeltypes.h#L852-L859
-#define COLOR_ORDER                   RGB
+#if !defined(COLOR_ORDER)
+   #define COLOR_ORDER                   RGB
+#endif
 
 // NUM_PIXELS  is the number of pixels to be 
-#define NUM_PIXELS                    200
-#error #define AVAILABLE_MILLI_AMPS          x2000x // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
-#define MAX_MILLI_AMPS_PER_PIXEL      60
-#define FRAMES_PER_SECOND             120
-#define DEFAULT_PATTERN_INDEX         0
+#if !defined(NUM_PIXELS)
+   #define NUM_PIXELS                    200
+#endif
+#if !defined(AVAILABLE_MILLI_AMPS)
+   #error #define AVAILABLE_MILLI_AMPS          x2000x // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
+#endif
+#if !defined(MAX_MILLI_AMPS_PER_PIXEL)
+   #define MAX_MILLI_AMPS_PER_PIXEL      60   // IMPORTANT: set to larger value if necessary
+#endif
+#if !defined(FRAMES_PER_SECOND)
+   #define FRAMES_PER_SECOND             120
+#endif
+#if !defined(DEFAULT_PATTERN_INDEX)
+   #define DEFAULT_PATTERN_INDEX         0
+#endif
+#if !defined(DEFAULT_BRIGHTNESS_INDEX)
+   #define DEFAULT_BRIGHTNESS_INDEX      3
+#endif
 
 // DEFAULT_COLOR_CORRECTION defines which FastLED built-in color correction to apply
 // Options include:
@@ -53,15 +71,21 @@
 //     static_cast<LEDColorCorrection>(0xRRGGBB) 
 //
 // See https://github.com/FastLED/FastLED/blob/b5874b588ade1d2639925e4e9719fa7d3c9d9e94/src/color.h#L13-L32
-#define DEFAULT_COLOR_CORRECTION      TypicalLEDStrip
+#if !defined(DEFAULT_COLOR_CORRECTION)
+   #define DEFAULT_COLOR_CORRECTION      TypicalLEDStrip
+#endif
 
 
 // NAME_PREFIX defines the product-specific prefix for auto-generated hostname
-#define NAME_PREFIX                   "ESP8266-"
+#if !defined(NAME_PREFIX)
+   #define NAME_PREFIX                   "ESP8266-"
+#endif
 
 // PRODUCT_FRIENDLY_NAME is used in HTML page's title and navigation bar
 // It is modified when js/app.js loads, by parsing json data generated from device
-#define PRODUCT_FRIENDLY_NAME         "ESP8266 + FastLED"
+#if !defined(PRODUCT_FRIENDLY_NAME)
+   #define PRODUCT_FRIENDLY_NAME         "ESP8266 + FastLED"
+#endif
 
 // IS_FIBONACCI is true when there are fibonacci-specific definitions for the product.
 // TODO: Consider splitting to two variables:
@@ -77,11 +101,60 @@
 // const uint8_t coordsX[NUM_PIXELS];
 // const uint8_t coordsY[NUM_PIXELS];
 // const uint8_t angles[NUM_PIXELS];
-#define IS_FIBONACCI                  0
+#if !defined(IS_FIBONACCI)
+   #define IS_FIBONACCI                  1
+#endif
+
+// PARALLEL_OUTPUT_CHANNELS indicates the number of independent channels
+// that should be configured.  When this value == 1, DATA_PIN is used to
+// control all pixels.
+//
+// When this value >= 2, this file must define:
+//
+// #define PIXELS_ON_DATA_PIN_1 wc
+// #define PIXELS_ON_DATA_PIN_2 xc
+// #define PIXELS_ON_DATA_PIN_3 yc
+// ...
+// #define PIXELS_ON_DATA_PIN_n zc
+//
+// Up to the number of parallel outputs,
+// *AND* the board file must support the required number of channels
+// by defining the corresponding pins as follows:
+//
+// #define DATA_PIN    w
+// #define DATA_PIN_2  x
+// #define DATA_PIN_3  y
+// ...
+// #define DATA_PIN_n  z
+//
+
+#if !defined(PARALLEL_OUTPUT_CHANNELS)
+   #define PARALLEL_OUTPUT_CHANNELS   1
+#endif
+// Example from Fibonacci512:
+// 
+// #if !defined(PARALLEL_OUTPUT_CHANNELS)
+//    #define PARALLEL_OUTPUT_CHANNELS   4
+// #endif
+// #if !defined(PIXELS_ON_DATA_PIN_1)
+//    #define PIXELS_ON_DATA_PIN_1     121
+// #endif
+// #if !defined(PIXELS_ON_DATA_PIN_2)
+//    #define PIXELS_ON_DATA_PIN_2     120
+// #endif
+// #if !defined(PIXELS_ON_DATA_PIN_3)
+//    #define PIXELS_ON_DATA_PIN_3     121
+// #endif
+// #if !defined(PIXELS_ON_DATA_PIN_4)
+//    #define PIXELS_ON_DATA_PIN_4     150
+// #endif
 
 // By default, no IR support is included.  Define ENABLE_IR to enable IR support.
 // #define ENABLE_IR
 // NOTE: When ENABLE_IR is defined, can also override controller-specific default:
 // #define IR_RECV_PIN  D99
+
+
+
 
 #error #endif // ESP8266_FASTLED_WEBSERVER_PRODUCT_xyzz_H

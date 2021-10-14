@@ -20,7 +20,32 @@
 #if !defined(ESP8266_FASTLED_WEBSERVER_CONTROLLER_ESP32_H)
 #define ESP8266_FASTLED_WEBSERVER_CONTROLLER_ESP32_H
 
-#define DATA_PIN                      18 // d1 mini32 (same physical location as D5 on the d1 mini)
+
+static_assert(PARALLEL_OUTPUT_CHANNELS <= 4, "ESP32 only has support for four parallel outputs defined, can be updated to support 16 outputs");
+
+
+
+#define DATA_PIN                      
+
+#if !defined(DATA_PIN)
+   #if PARALLEL_OUTPUT_CHANNELS == 1
+      #define DATA_PIN      18 // d1 mini32 (same physical location as D5 on the d1 mini)
+   #else
+      #define DATA_PIN      23 // d1 mini32 (same physical location as D7 on the d1 mini)
+   #endif
+#endif
+
+#if !defined(DATA_PIN_2) && PARALLEL_OUTPUT_CHANNELS >= 2
+   #define DATA_PIN_2    19 // d1 mini32 (same physical location as D6 on the d1 mini)
+#endif
+#if !defined(DATA_PIN_3) && PARALLEL_OUTPUT_CHANNELS >= 3
+   #define DATA_PIN_3     5 // d1 mini32 (same physical location as D8 on the d1 mini)
+#endif
+#if !defined(DATA_PIN_4) && PARALLEL_OUTPUT_CHANNELS >= 4
+   #define DATA_PIN_4    18 // d1 mini32 (same physical location as D5 on the d1 mini)
+#endif
+
+
 
 #if defined(ENABLE_IR) && !defined(IR_RECV_PIN)
    // Default pin for ESP32 is 16 (for d1 mini32, this is the same physical location as D4 on the d1 mini)

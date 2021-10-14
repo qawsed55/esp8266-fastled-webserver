@@ -20,16 +20,47 @@
 #if !defined(ESP8266_FASTLED_WEBSERVER_PRODUCT_DEFAULT_H)
 #define ESP8266_FASTLED_WEBSERVER_PRODUCT_DEFAULT_H
 
-#define LED_TYPE                      WS2811
-#define COLOR_ORDER                   RGB
-#define NUM_PIXELS                    200
-#define AVAILABLE_MILLI_AMPS          2000 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
-#define MAX_MILLI_AMPS_PER_PIXEL      60   // IMPORTANT: set to larger value if necessary
-#define FRAMES_PER_SECOND             120
-#define DEFAULT_PATTERN_INDEX         0
-#define DEFAULT_COLOR_CORRECTION      TypicalLEDStrip
-#define NAME_PREFIX                   "ESP8266-"
-#define PRODUCT_FRIENDLY_NAME         "ESP8266 + FastLED"
-#define IS_FIBONACCI                  0
+#if !defined(LED_TYPE)
+   #define LED_TYPE                      WS2811
+#endif
+#if !defined(COLOR_ORDER)
+   #define COLOR_ORDER                   RGB
+#endif
+#if !defined(NUM_PIXELS)
+   #define NUM_PIXELS                    200
+#endif
+#if !defined(AVAILABLE_MILLI_AMPS)
+   #define AVAILABLE_MILLI_AMPS          2000 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
+#endif
+#if !defined(MAX_MILLI_AMPS_PER_PIXEL)
+   #define MAX_MILLI_AMPS_PER_PIXEL      60   // IMPORTANT: set to larger value if necessary
+#endif
+#if !defined(FRAMES_PER_SECOND)
+   #define FRAMES_PER_SECOND             120
+#endif
+#if !defined(DEFAULT_PATTERN_INDEX)
+   #define DEFAULT_PATTERN_INDEX         0
+#endif
+#if !defined(DEFAULT_BRIGHTNESS_INDEX)
+   #define DEFAULT_BRIGHTNESS_INDEX      3
+#endif
+#if !defined(DEFAULT_COLOR_CORRECTION)
+   #define DEFAULT_COLOR_CORRECTION      TypicalLEDStrip
+#endif
+#if !defined(NAME_PREFIX)
+   #define NAME_PREFIX                   "ESP8266-"
+#endif
+#if !defined(PRODUCT_FRIENDLY_NAME)
+   #define PRODUCT_FRIENDLY_NAME         "ESP8266 + FastLED"
+#endif
+#if !defined(IS_FIBONACCI)
+   #define IS_FIBONACCI                  0
+#endif
+#if !defined(PARALLEL_OUTPUT_CHANNELS)
+   #define PARALLEL_OUTPUT_CHANNELS      1
+#endif
+
+
+
 
 #endif // ESP8266_FASTLED_WEBSERVER_PRODUCT_DEFAULT_H

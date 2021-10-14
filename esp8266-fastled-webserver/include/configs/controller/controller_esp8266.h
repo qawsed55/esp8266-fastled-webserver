@@ -20,7 +20,25 @@
 #if !defined(ESP8266_FASTLED_WEBSERVER_CONTROLLER_ESP8266_H)
 #define ESP8266_FASTLED_WEBSERVER_CONTROLLER_ESP8266_H
 
-#define DATA_PIN                      D5 // d1 mini
+static_assert(PARALLEL_OUTPUT_CHANNELS <= 4, "ESP8266 only supports four parallel outputs");
+
+#if !defined(DATA_PIN)
+   #if PARALLEL_OUTPUT_CHANNELS == 1
+      #define DATA_PIN      D5 // d1 mini
+   #else
+      #define DATA_PIN      D7 // Fib512 uses different default for primary output pin
+   #endif
+#endif
+
+#if !defined(DATA_PIN_2) && PARALLEL_OUTPUT_CHANNELS >= 2
+   #define DATA_PIN_2    D6 // d1 mini
+#endif
+#if !defined(DATA_PIN_3) && PARALLEL_OUTPUT_CHANNELS >= 3
+   #define DATA_PIN_3    D8 // d1 mini
+#endif
+#if !defined(DATA_PIN_4) && PARALLEL_OUTPUT_CHANNELS >= 4
+   #define DATA_PIN_4    D5 // d1 mini
+#endif
 
 #if defined(ENABLE_IR) && !defined(IR_RECV_PIN)
    #define IR_RECV_PIN   D4

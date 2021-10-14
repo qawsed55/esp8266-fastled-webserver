@@ -470,6 +470,9 @@ function addSectionField(field) {
   template.attr("id", "form-group-section-" + field.name);
   template.attr("data-field-type", field.type);
 
+  var label = template.find(".section-header-text");
+  label.text(field.label);
+
   $("#form").append(template);
 }
 

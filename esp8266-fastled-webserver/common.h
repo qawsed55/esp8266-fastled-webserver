@@ -48,6 +48,7 @@ extern "C" {
 
 #if defined(ENABLE_IR)
   #include <IRremoteESP8266.h>
+  #include "commands.h"
 #endif
 
 // forward-declarations
@@ -98,9 +99,6 @@ typedef PaletteAndName PaletteAndNameList[];
 #include "FSBrowser.h"
 #include "Ping.h"
 
-#if defined(ENABLE_IR)
-  #include "Commands.h"
-#endif
 
 
 

@@ -44,7 +44,7 @@ CRGB leds[NUM_PIXELS];
 
 const uint8_t brightnessCount = 5;
 uint8_t brightnessMap[brightnessCount] = { 16, 32, 64, 128, 255 };
-uint8_t brightnessIndex = 3;
+uint8_t brightnessIndex = DEFAULT_BRIGHTNESS_INDEX;
 
 // ten seconds per color palette makes a good demo
 // 20-120 is better for deployment
@@ -245,10 +245,52 @@ const String paletteNames[paletteCount] = {
 
 #include "Fields.h"
 
-// TODO / BUGBUG -- should this be ESP8266-specific?
+// TODO / BUGBUG -- should this be ESP8266-specific?  Is this only for when IR enabled ???
+// FIB128 did not have this...
 #if defined(PRODUCT_FIBONACCI256)
   ADC_MODE(ADC_VCC);
 #endif
+
+// Ugly macro-like constexpr, used for FastLED template arguments
+template <size_t ONE_BASED_OUTPUT_CHANNEL>
+constexpr int LedOffset() {
+  static_assert(ONE_BASED_OUTPUT_CHANNEL <= PARALLEL_OUTPUT_CHANNELS, "");
+  static_assert(ONE_BASED_OUTPUT_CHANNEL >= 1, "");
+  return 0 // this would be much simpler with C++14
+  #if PARALLEL_OUTPUT_CHANNELS >= 2
+    + ((ONE_BASED_OUTPUT_CHANNEL >= 2) ? PIXELS_ON_DATA_PIN_1 : 0)
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 3
+    + ((ONE_BASED_OUTPUT_CHANNEL >= 3) ? PIXELS_ON_DATA_PIN_2 : 0)
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 4
+    + ((ONE_BASED_OUTPUT_CHANNEL >= 4) ? PIXELS_ON_DATA_PIN_3 : 0)
+  #endif
+  ;
+}
+template <size_t ONE_BASED_OUTPUT_CHANNEL>
+constexpr int LedCount() {
+  static_assert(ONE_BASED_OUTPUT_CHANNEL <= PARALLEL_OUTPUT_CHANNELS, "");
+  static_assert(ONE_BASED_OUTPUT_CHANNEL >= 1, "");
+  #if PARALLEL_OUTPUT_CHANNELS == 1
+    return NUM_PIXELS;
+  #else
+    return // this would be much simpler with C++14
+    #if PARALLEL_OUTPUT_CHANNELS >= 4
+      (ONE_BASED_OUTPUT_CHANNEL == 4) ? PIXELS_ON_DATA_PIN_4 :
+    #endif
+    #if PARALLEL_OUTPUT_CHANNELS >= 3
+      (ONE_BASED_OUTPUT_CHANNEL == 3) ? PIXELS_ON_DATA_PIN_3 :
+    #endif
+    #if PARALLEL_OUTPUT_CHANNELS >= 2
+      (ONE_BASED_OUTPUT_CHANNEL == 2) ? PIXELS_ON_DATA_PIN_2 :
+    #endif
+    #if PARALLEL_OUTPUT_CHANNELS >= 1
+      (ONE_BASED_OUTPUT_CHANNEL == 1) ? PIXELS_ON_DATA_PIN_1 :
+    #endif
+      0;
+  #endif
+}
 
 
 void setup() {
@@ -260,8 +302,23 @@ void setup() {
 
   uint16_t milliAmps = (AVAILABLE_MILLI_AMPS < MAX_MILLI_AMPS) ? AVAILABLE_MILLI_AMPS : MAX_MILLI_AMPS;
 
+  #if PARALLEL_OUTPUT_CHANNELS == 1
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_PIXELS);         // for WS2812 (Neopixel)
+  #else
+  #if PARALLEL_OUTPUT_CHANNELS >= 2
+  FastLED.addLeds<LED_TYPE, DATA_PIN,   COLOR_ORDER>(leds, LedOffset<1>(), LedCount<1>());
+  FastLED.addLeds<LED_TYPE, DATA_PIN_2, COLOR_ORDER>(leds, LedOffset<2>(), LedCount<2>());
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 3
+  FastLED.addLeds<LED_TYPE, DATA_PIN_3, COLOR_ORDER>(leds, LedOffset<3>(), LedCount<3>());
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 4
+  FastLED.addLeds<LED_TYPE, DATA_PIN_4, COLOR_ORDER>(leds, LedOffset<4>(), LedCount<4>());
+  #endif
+  #endif // PARALLEL_OUTPUT_CHANNELS
+
   //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_PIXELS); // for APA102 (Dotstar)
+
   FastLED.setDither(false);
   FastLED.setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(brightness);
@@ -274,7 +331,9 @@ void setup() {
 
   FastLED.setBrightness(brightness);
 
-  //  irReceiver.enableIRIn(); // Start the receiver
+#if defined(ENABLE_IR)
+  irReceiver.enableIRIn(); // Start the receiver
+#endif
 
   Serial.println();
   Serial.println(F("System Info:"));
@@ -939,9 +998,60 @@ void loop() {
 
 
 // TODO: Save settings in file system, not EEPROM!
+
 // TODO: Combine settings for all builds into a single structure.
+
 // TODO: Update magic number from 0x55 to 0xAA (or 0x96 or 0x69)
 
+void readSettingsFib128()
+{
+  // check for "magic number" so we know settings have been written to EEPROM
+  // and it's not just full of random bytes
+
+  if (EEPROM.read(511) != 55) {
+    return;
+  }
+
+  brightness = EEPROM.read(0);
+
+  currentPatternIndex = EEPROM.read(1);
+  if (currentPatternIndex >= patternCount) {
+    currentPatternIndex = patternCount - 1;
+  }
+
+  byte r = EEPROM.read(2);
+  byte g = EEPROM.read(3);
+  byte b = EEPROM.read(4);
+
+  if (r == 0 && g == 0 && b == 0)
+  {
+  }
+  else
+  {
+    solidColor = CRGB(r, g, b);
+  }
+
+  power = EEPROM.read(5);
+
+  autoplay = EEPROM.read(6);
+  autoplayDuration = EEPROM.read(7);
+
+  currentPaletteIndex = EEPROM.read(8);
+  if (currentPaletteIndex >= paletteCount) {
+    currentPaletteIndex = paletteCount - 1;
+  }
+
+  twinkleSpeed = EEPROM.read(9);
+  twinkleDensity = EEPROM.read(10);
+
+  cooling = EEPROM.read(11);
+  sparking = EEPROM.read(12);
+
+  coolLikeIncandescent = EEPROM.read(13);
+
+  showClock = EEPROM.read(14);
+  clockBackgroundFade = EEPROM.read(15);
+}
 void readSettingsFib256()
 {
   // check for "magic number" so we know settings have been written to EEPROM
@@ -990,7 +1100,54 @@ void readSettingsFib256()
 
   // coolLikeIncandescent = EEPROM.read(13);
 }
+void readSettingsFib512()
+{
+  // check for "magic number" so we know settings have been written to EEPROM
+  // and it's not just full of random bytes
 
+  if (EEPROM.read(511) != 55) {
+    return;
+  }
+
+  brightness = EEPROM.read(0);
+
+  currentPatternIndex = EEPROM.read(1);
+  if (currentPatternIndex >= patternCount) {
+    currentPatternIndex = patternCount - 1;
+  }
+
+  byte r = EEPROM.read(2);
+  byte g = EEPROM.read(3);
+  byte b = EEPROM.read(4);
+
+  if (r == 0 && g == 0 && b == 0)
+  {
+  }
+  else
+  {
+    solidColor = CRGB(r, g, b);
+  }
+
+  power = EEPROM.read(5);
+
+  autoplay = EEPROM.read(6);
+  autoplayDuration = EEPROM.read(7);
+
+  currentPaletteIndex = EEPROM.read(8);
+  if (currentPaletteIndex >= paletteCount) {
+    currentPaletteIndex = paletteCount - 1;
+  }
+  twinkleSpeed = EEPROM.read(9);
+  twinkleDensity = EEPROM.read(10);
+
+  cooling = EEPROM.read(11);
+  sparking = EEPROM.read(12);
+
+  coolLikeIncandescent = EEPROM.read(13);
+
+  showClock = EEPROM.read(14);
+  clockBackgroundFade = EEPROM.read(15);
+}
 void readSettingsDefaultProduct()
 {
   // check for "magic number" so we know settings have been written to EEPROM
@@ -1039,8 +1196,12 @@ void readSettingsDefaultProduct()
 }
 
 void readSettings() {
-  #if defined(PRODUCT_FIBONACCI256)
+  #if defined(PRODUCT_FIBONACCI512)
+    readSettingsFib512();
+  #elif defined(PRODUCT_FIBONACCI256)
     readSettingsFib256();
+  #elif defined(PRODUCT_FIBONACCI128)
+    readSettingsFib128();
   #elif defined(PRODUCT_DEFAULT)
     readSettingsDefaultProduct();
   #else
@@ -1048,6 +1209,27 @@ void readSettings() {
   #endif
 }
 
+void writeAndCommitSettingsFib128()
+{
+  EEPROM.write(0, brightness);
+  EEPROM.write(1, currentPatternIndex);
+  EEPROM.write(2, solidColor.r);
+  EEPROM.write(3, solidColor.g);
+  EEPROM.write(4, solidColor.b);
+  EEPROM.write(5, power);
+  EEPROM.write(6, autoplay);
+  EEPROM.write(7, autoplayDuration);
+  EEPROM.write(8, currentPaletteIndex);
+  EEPROM.write(9, twinkleSpeed);
+  EEPROM.write(10, twinkleDensity);
+  EEPROM.write(11, cooling);
+  EEPROM.write(12, sparking);
+  EEPROM.write(13, coolLikeIncandescent);
+  EEPROM.write(14, showClock);
+  EEPROM.write(15, clockBackgroundFade);
+  EEPROM.write(511, 55);
+  EEPROM.commit();
+}
 void writeAndCommitSettingsFib256()
 {
   EEPROM.write(0, brightness);
@@ -1064,6 +1246,28 @@ void writeAndCommitSettingsFib256()
   EEPROM.write(511, 55);
   EEPROM.commit();
 }
+void writeAndCommitSettingsFib512()
+{
+  EEPROM.write(0, brightness);
+  EEPROM.write(1, currentPatternIndex);
+  EEPROM.write(2, solidColor.r);
+  EEPROM.write(3, solidColor.g);
+  EEPROM.write(4, solidColor.b);
+  EEPROM.write(5, power);
+  EEPROM.write(6, autoplay);
+  EEPROM.write(7, autoplayDuration);
+  EEPROM.write(8, currentPaletteIndex);
+  EEPROM.write(9, twinkleSpeed);
+  EEPROM.write(10, twinkleDensity);
+  EEPROM.write(11, cooling);
+  EEPROM.write(12, sparking);
+  EEPROM.write(13, coolLikeIncandescent);
+  EEPROM.write(14, showClock);
+  EEPROM.write(15, clockBackgroundFade);
+  EEPROM.write(511, 55);
+  EEPROM.commit();
+}
+
 void writeAndCommitSettingsDefaultProduct()
 {
   EEPROM.write(0, brightness);
@@ -1084,11 +1288,14 @@ void writeAndCommitSettingsDefaultProduct()
   EEPROM.commit();
 }
 
-
 void writeAndCommitSettings()
 {
-  #if defined(PRODUCT_FIBONACCI256)
+  #if defined(PRODUCT_FIBONACCI512)
+    writeAndCommitSettingsFib512();
+  #elif defined(PRODUCT_FIBONACCI256)
     writeAndCommitSettingsFib256();
+  #elif defined(PRODUCT_FIBONACCI128)
+    writeAndCommitSettingsFib128();
   #elif defined(PRODUCT_DEFAULT)
     writeAndCommitSettingsDefaultProduct();
   #else
@@ -1392,10 +1599,11 @@ void fillWithPride(bool useFibonacciOrder)
 void pride() {
   fillWithPride(false);
 }
+#if IS_FIBONACCI // prideFibonacci() uses fibonacciToPhysical
 void prideFibonacci() {
   fillWithPride(true);
 }
-
+#endif
 
 void fillRadialPaletteShift(bool useFibonacciOrder)
 {
@@ -1403,6 +1611,7 @@ void fillRadialPaletteShift(bool useFibonacciOrder)
     #if IS_FIBONACCI
       uint16_t idx = useFibonacciOrder ? fibonacciToPhysical[i] : i;
     #else
+      (void)useFibonacciOrder;
       uint16_t idx = i;
     #endif
     leds[idx] = ColorFromPalette(gCurrentPalette, i + gHue, 255, LINEARBLEND);
@@ -1414,6 +1623,7 @@ void fillRadialPaletteShiftOutward(bool useFibonacciOrder)
     #if IS_FIBONACCI
       uint16_t idx = useFibonacciOrder ? fibonacciToPhysical[i] : i;
     #else
+      (void)useFibonacciOrder;
       uint16_t idx = i;
     #endif
     leds[idx] = ColorFromPalette(gCurrentPalette, i - gHue, 255, LINEARBLEND);
@@ -1569,7 +1779,7 @@ void colorWaves()
 {
   fillWithColorwaves( leds, NUM_PIXELS, gCurrentPalette, false);
 }
-#if IS_FIBONACCI
+#if IS_FIBONACCI // colorWavesFibonacci() uses fibonacciToPhysical
 void colorWavesFibonacci()
 {
   fillWithColorwaves( leds, NUM_PIXELS, gCurrentPalette, true);
@@ -1586,7 +1796,7 @@ void palettetest( CRGB* ledarray, uint16_t numleds, const CRGBPalette16& gCurren
 }
 
 
-#if IS_FIBONACCI // uses physicalToFibonacci and angles
+#if IS_FIBONACCI // swirlFibonacci() uses physicalToFibonacci and angles
 void swirlFibonacci() {
 
   const float z = 2.5; // zoom (2.0)
@@ -1617,7 +1827,7 @@ void swirlFibonacci() {
 }
 #endif
 
-#if IS_FIBONACCI // uses coordsX/coordsY
+#if IS_FIBONACCI // fireFibonacci() uses coordsX/coordsY
 // TODO: combine with normal fire effect
 void fireFibonacci() {
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
@@ -1631,7 +1841,7 @@ void fireFibonacci() {
 }
 #endif
 
-#if IS_FIBONACCI // uses coordsX/coordsY
+#if IS_FIBONACCI // waterFibonacci() uses coordsX/coordsY
 // TODO: combine with normal water effect
 void waterFibonacci() {
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
@@ -1645,7 +1855,7 @@ void waterFibonacci() {
 }
 #endif
 
-#if IS_FIBONACCI // uses angle, antialiasPixelAR()
+#if IS_FIBONACCI // emitterFibonacci() uses angle, antialiasPixelAR()
 /**
  * Emits arcs of color spreading out from the center to the edge of the disc.
  */

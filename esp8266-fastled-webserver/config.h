@@ -22,10 +22,12 @@
 
 // This header file lists (and provides defaults for) the various configurations.
 // When compiling from Arduino, you can edit this file.
-// When compiling from PlatformIO, this is a reference for compiler flags
+// When compiling from PlatformIO, this is a reference for compiler flags.
 
 //#define PRODUCT_DEFAULT
-#define PRODUCT_FIBONACCI256
+//#define PRODUCT_FIBONACCI256
+//#define PRODUCT_FIBONACCI128
+#define PRODUCT_FIBONACCI512
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Additional configuration options ... defaults shown
@@ -42,8 +44,12 @@
     // Product-specific configuration
     #if defined(PRODUCT_DEFAULT)
         #include "include\configs\product\default.h"
+    #elif defined(PRODUCT_FIBONACCI128)
+        #include "include\configs\product\fibonacci128.h"
     #elif defined(PRODUCT_FIBONACCI256)
         #include "include\configs\product\fibonacci256.h"
+    #elif defined(PRODUCT_FIBONACCI512)
+        #include "include\configs\product\fibonacci512.h"
     #else
         #error "Must define product to build against"
     #endif
@@ -108,6 +114,18 @@
         #error "PRODUCT_FRIENDLY_NAME must be defined by product"
     #endif
     // IS_FIBONACCI: There does not appear to be a way to check, at compile-time here, if requirements are met
+    #if !defined(IS_FIBONACCI) || ((IS_FIBONACCI != 0) && (IS_FIBONACCI != 1))
+        #error "IS_FIBONACCI must be defined to zero or one"
+    #endif
+    #if !defined(PARALLEL_OUTPUT_CHANNELS)
+        #error "PARALLEL_OUTPUT_CHANNELS must be defined"
+    #elif (PARALLEL_OUTPUT_CHANNELS == 1)
+        // nothing to test here
+    #elif (PARALLEL_OUTPUT_CHANNELS == 4)
+        static_assert(NUM_PIXELS == (PIXELS_ON_DATA_PIN_1 + PIXELS_ON_DATA_PIN_2 + PIXELS_ON_DATA_PIN_3 + PIXELS_ON_DATA_PIN_4), "");
+    #else
+        #error "PARALLEL_OUTPUT_CHANNELS currently tested only with values 1 or 4."
+    #endif
     #if (UTC_OFFSET_IN_SECONDS < (-14L * 60L * 60L))
         #error "UTC_OFFSET_IN_SECONDS offset does not appear correct (< -14H) ... Note it is defined in seconds."
     #elif (UTC_OFFSET_IN_SECONDS > (14L * 60L * 60L))

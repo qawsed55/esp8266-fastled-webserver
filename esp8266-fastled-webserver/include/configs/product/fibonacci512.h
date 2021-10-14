@@ -17,8 +17,8 @@
 */
 #pragma once
 
-#if !defined(ESP8266_FASTLED_WEBSERVER_PRODUCT_FIB256_H)
-#define ESP8266_FASTLED_WEBSERVER_PRODUCT_FIB256_H
+#if !defined(ESP8266_FASTLED_WEBSERVER_PRODUCT_FIB512_MINI_H)
+#define ESP8266_FASTLED_WEBSERVER_PRODUCT_FIB512_MINI_H
 
 #if !defined(LED_TYPE)
    #define LED_TYPE                      WS2812B
@@ -27,13 +27,13 @@
    #define COLOR_ORDER                   GRB
 #endif
 #if !defined(NUM_PIXELS)
-   #define NUM_PIXELS                    256
+   #define NUM_PIXELS                    512
 #endif
 #if !defined(AVAILABLE_MILLI_AMPS)
-   #define AVAILABLE_MILLI_AMPS          1600 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
+   #define AVAILABLE_MILLI_AMPS          2000 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
 #endif
 #if !defined(MAX_MILLI_AMPS_PER_PIXEL)
-   #define MAX_MILLI_AMPS_PER_PIXEL      12   // IMPORTANT: set to larger value if necessary
+   #define MAX_MILLI_AMPS_PER_PIXEL      48   // IMPORTANT: set to larger value if necessary
 #endif
 #if !defined(FRAMES_PER_SECOND)
    #define FRAMES_PER_SECOND             120
@@ -48,19 +48,29 @@
    #define DEFAULT_COLOR_CORRECTION      TypicalSMD5050
 #endif
 #if !defined(NAME_PREFIX)
-   #define NAME_PREFIX                   "Fibonacci256-"
+   #define NAME_PREFIX                   "Fibonacci512-"
 #endif
 #if !defined(PRODUCT_FRIENDLY_NAME)
-   #define PRODUCT_FRIENDLY_NAME         "Fibonacci256"
+   #define PRODUCT_FRIENDLY_NAME         "Fibonacci512"
 #endif
 #if !defined(IS_FIBONACCI)
    #define IS_FIBONACCI                  1
 #endif
 #if !defined(PARALLEL_OUTPUT_CHANNELS)
-   #define PARALLEL_OUTPUT_CHANNELS      1
+   #define PARALLEL_OUTPUT_CHANNELS      4
+#endif
+#if !defined(PIXELS_ON_DATA_PIN_1)
+   #define PIXELS_ON_DATA_PIN_1 121
+#endif
+#if !defined(PIXELS_ON_DATA_PIN_2)
+   #define PIXELS_ON_DATA_PIN_2 120
+#endif
+#if !defined(PIXELS_ON_DATA_PIN_3)
+   #define PIXELS_ON_DATA_PIN_3 121
+#endif
+#if !defined(PIXELS_ON_DATA_PIN_4)
+   #define PIXELS_ON_DATA_PIN_4 150
 #endif
 
 
-
-
-#endif // ESP8266_FASTLED_WEBSERVER_PRODUCT_FIB256_H
+#endif // ESP8266_FASTLED_WEBSERVER_PRODUCT_FIB512_MINI_H

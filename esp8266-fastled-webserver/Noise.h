@@ -70,11 +70,14 @@ static const CRGBPalette16 blackAndBlueStripedPalette {
 // Additionally, you can manually define your own color palettes, or you can write
 // code that creates color palettes on the fly.
 
+// TODO: Is Fib512 have a bug, because it uses `uint8_t` as data type for loop index,
+//       which will never be >= 512, and thus loop infinitely?
+
 void drawNoise(CRGBPalette16 palette, uint8_t hueReduce = 0)
 {
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    uint16_t x = coordsX[i];
-    uint16_t y = coordsY[i];
+    uint8_t x = coordsX[i];
+    uint8_t y = coordsY[i];
 
     int xoffset = noisescale * x;
     int yoffset = noisescale * y;
