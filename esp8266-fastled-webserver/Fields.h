@@ -81,6 +81,28 @@ String getAutoplayDuration() {
   return String(autoplayDuration);
 }
 
+String getShowClock() {
+  return String(showClock);
+}
+
+String getClockBackgroundFade() {
+  return String(clockBackgroundFade);
+}
+
+void setShowClock(uint8_t value)
+{
+  showClock = value == 0 ? 0 : 1;
+  writeAndCommitSettings();
+  broadcastInt("showClock", showClock);
+}
+
+void setClockBackgroundFade(uint8_t value)
+{
+  clockBackgroundFade = value;
+  writeAndCommitSettings();
+  broadcastInt("clockBackgroundFade", clockBackgroundFade);
+}
+
 String getSolidColor() {
   return String(solidColor.r) + "," + String(solidColor.g) + "," + String(solidColor.b);
 }
@@ -258,6 +280,11 @@ FieldList fields = {
     {"autoplayDuration", "Autoplay Duration", NumberFieldType,  0, 255, getAutoplayDuration, nullptr, nullptr},
 
     //--------------------------------------------------------------------------------------------------------
+    {"clock",               "Clock",           SectionFieldType, 0,   0,  nullptr,                nullptr, nullptr},	
+    {"showClock",           "Show Clock",      BooleanFieldType, 0,   1,  getShowClock,           nullptr, nullptr},	
+    {"clockBackgroundFade", "Background Fade", NumberFieldType,  0, 255,  getClockBackgroundFade, nullptr, nullptr},
+
+    //--------------------------------------------------------------------------------------------------------
     {"solidColorSection", "Solid Color", SectionFieldType, 0,   0, nullptr,       nullptr, nullptr},
     {"solidColor",        "Color",       ColorFieldType,   0, 255, getSolidColor, nullptr, nullptr},
 
@@ -301,4 +328,4 @@ FieldList fields = {
     {"sHueMax", "S Hue Max", NumberFieldType, 0, 255, getSHueMax, nullptr, setSHueMax},
 };
 
-uint8_t fieldCount = ARRAY_SIZE(fields);
+uint8_t fieldCount = ARRAY_SIZE2(fields);
