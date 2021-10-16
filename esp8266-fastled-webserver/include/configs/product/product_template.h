@@ -96,11 +96,14 @@
 //
 // When this is true, the following must be defined in map.h:
 //
-// const uint16_t physicalToFibonacci[NUM_PIXELS];
-// const uint16_t fibonacciToPhysical[NUM_PIXELS];
+// const uint8_t physicalToFibonacci[NUM_PIXELS];
+// const uint8_t fibonacciToPhysical[NUM_PIXELS];
 // const uint8_t coordsX[NUM_PIXELS];
 // const uint8_t coordsY[NUM_PIXELS];
 // const uint8_t angles[NUM_PIXELS];
+//
+// NOTE: physicalToFibonacci[] and fibonacciToPhysical[] are uint16_t when
+//       NUM_PIXELS is greater than 256.
 #if !defined(IS_FIBONACCI)
    #define IS_FIBONACCI                  1
 #endif

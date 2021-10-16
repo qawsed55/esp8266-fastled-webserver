@@ -22,6 +22,7 @@
 #include "./include/simplehacks/static_eval.h"
 #include "./include/simplehacks/constexpr_strlen.h"
 #include "./include/simplehacks/array_size2.h"
+
 #include "config.h" // must be included before FastLED.h
 
 #define FASTLED_INTERNAL // no other way to suppress build warnings
@@ -46,6 +47,16 @@ extern "C" {
 #include <EEPROM.h>
 #include <WiFiManager.h> // https://github.com/tzapu/WiFiManager/tree/development
 
+#if defined(ESP32) || defined(ESP8266)
+  // Optional: (LGPL) https://github.com/sinricpro/ESPTrueRandom.git#ed198f459da6d7af65dd13317a4fdc97b23991b4
+  // #include "ESPTrueRandom.h"
+  // Then:
+  //     ESPTrueRandom.useRNG = true;
+  //     int32_t r = ESPTrueRandom.memfill((void*)&r, sizeof(r));
+#else
+  #error "Currently only ESP32 and ESP8266 are supported"
+#endif
+
 #if defined(ENABLE_IR)
   #include <IRremoteESP8266.h>
   #include "commands.h"
@@ -65,9 +76,14 @@ extern ESP8266WebServer webServer;
 extern String nameString;
 
 
-#if IS_FIBONACCI
-  extern const uint16_t physicalToFibonacci [NUM_PIXELS];
-  extern const uint16_t fibonacciToPhysical [NUM_PIXELS];
+#if IS_FIBONACCI // actual data in map.h
+  #if NUM_PIXELS > 256 // when more than 256 pixels, cannot store index in uint8_t....
+    extern const uint16_t physicalToFibonacci [NUM_PIXELS];
+    extern const uint16_t fibonacciToPhysical [NUM_PIXELS];
+  #else
+    extern const uint8_t physicalToFibonacci [NUM_PIXELS];
+    extern const uint8_t fibonacciToPhysical [NUM_PIXELS];
+  #endif
   extern const uint8_t  coordsX[NUM_PIXELS];
   extern const uint8_t  coordsY[NUM_PIXELS];
   extern const uint8_t  angles[NUM_PIXELS];
@@ -91,6 +107,7 @@ typedef PaletteAndName PaletteAndNameList[];
 
 
 // Function prototypes
+
 
 // Local C++ sources that are masquerading as header files
 #include "GradientPalettes.h"

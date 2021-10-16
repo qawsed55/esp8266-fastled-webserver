@@ -23,7 +23,11 @@
 
 static_assert(PARALLEL_OUTPUT_CHANNELS <= 4, "ESP32 only has support for four parallel outputs defined, can be updated to support 16 outputs");
 
-
+// TODO: consider using I2S (instead of RMT) on the ESP32:
+//
+// #define FASTLED_ESP32_I2S true
+//
+// See https://github.com/FastLED/FastLED/issues/1220#issuecomment-822677011
 
 #define DATA_PIN                      
 

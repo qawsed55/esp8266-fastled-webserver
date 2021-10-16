@@ -37,6 +37,12 @@ String getPower() {
 //  return String(brightness);
 //}
 
+// TODO: wrapper class for EEPROM settings, to help ensure clear understanding
+//       of all locations that can cause settings committed / EEPROM write.
+//       Also simplifies reading prior value before writing new value (extend EEPROM life)
+//       Also simplifies later extending CRC, transactional updates, bypassing "dead"
+//       areas of EEPROM, etc.
+
 String getBrightness() {
   return String(brightness);
 }

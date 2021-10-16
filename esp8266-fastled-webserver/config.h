@@ -24,10 +24,15 @@
 // When compiling from Arduino, you can edit this file.
 // When compiling from PlatformIO, this is a reference for compiler flags.
 
-//#define PRODUCT_DEFAULT
-//#define PRODUCT_FIBONACCI256
-//#define PRODUCT_FIBONACCI128
-#define PRODUCT_FIBONACCI512
+#define PRODUCT_DEFAULT
+// #define PRODUCT_FIBONACCI512
+// #define PRODUCT_FIBONACCI256
+// #define PRODUCT_FIBONACCI128
+// #define PRODUCT_FIBONACCI64_FULL  // 86mm, WS2812B-5050, ~60mA/pixel
+// #define PRODUCT_FIBONACCI64_MINI  // 64mm, WS2812B-3535, ~60mA/pixel
+// #define PRODUCT_FIBONACCI64_MICRO // 40mm, WS2812C-2020,  ~5mA/pixel
+// #define PRODUCT_FIBONACCI64_NANO  // 33mm, SK6805-EC15,   ~5mA/pixel
+// #define PRODUCT_FIBONACCI32
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Additional configuration options ... defaults shown
@@ -44,6 +49,10 @@
     // Product-specific configuration
     #if defined(PRODUCT_DEFAULT)
         #include "include\configs\product\default.h"
+    #elif defined(PRODUCT_FIBONACCI32)
+        #include "include\configs\product\fibonacci32.h"
+    #elif defined(PRODUCT_FIBONACCI64_FULL) || defined(PRODUCT_FIBONACCI64_MINI) || defined(PRODUCT_FIBONACCI64_MICRO) || defined(PRODUCT_FIBONACCI64_NANO)
+        #include "include\configs\product\fibonacci64.h"
     #elif defined(PRODUCT_FIBONACCI128)
         #include "include\configs\product\fibonacci128.h"
     #elif defined(PRODUCT_FIBONACCI256)
