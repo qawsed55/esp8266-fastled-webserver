@@ -1,4 +1,4 @@
-#if IS_FIBONACCI
+#if IS_FIBONACCI || HAS_COORDINATE_MAP
 
 // Each Fibonacci board must define the following arrays:
 //
@@ -72,27 +72,79 @@
 #elif defined(PRODUCT_FIBONACCI64_FULL) || defined(PRODUCT_FIBONACCI64_MINI)
   const uint8_t  physicalToFibonacci[NUM_PIXELS] { 0, 13, 26, 39, 52, 57, 44, 31, 18, 5, 10, 23, 36, 49, 62, 54, 41, 28, 15, 2, 7, 20, 33, 46, 59, 51, 38, 25, 12, 4, 17, 30, 43, 56, 61, 48, 35, 22, 9, 1, 14, 27, 40, 53, 58, 45, 32, 19, 6, 11, 24, 37, 50, 63, 55, 42, 29, 16, 3, 8, 21, 34, 47, 60 };
   const uint8_t  fibonacciToPhysical[NUM_PIXELS] { 0, 39, 19, 58, 29, 9, 48, 20, 59, 38, 10, 49, 28, 1, 40, 18, 57, 30, 8, 47, 21, 60, 37, 11, 50, 27, 2, 41, 17, 56, 31, 7, 46, 22, 61, 36, 12, 51, 26, 3, 42, 16, 55, 32, 6, 45, 23, 62, 35, 13, 52, 25, 4, 43, 15, 54, 33, 5, 44, 24, 63, 34, 14, 53 };
-  const uint8_t  coordsX[NUM_PIXELS]              { 140, 189, 208, 214, 208, 146, 168, 180, 180, 162, 152, 146, 129, 103, 72, 40, 70, 97, 120, 131, 107, 79, 50, 23, 0, 7, 23, 46, 76, 93, 57, 37, 28, 29, 87, 68, 59, 62, 80, 113, 91, 94, 109, 133, 202, 172, 145, 125, 117, 145, 170, 198, 227, 253, 255, 235, 210, 181, 148, 175, 207, 228, 240, 244 };
-  const uint8_t  coordsY[NUM_PIXELS]              { 128, 114, 91, 63, 34, 0, 21, 48, 76, 106, 78, 47, 25, 11, 5, 38, 35, 42, 61, 101, 87, 69, 68, 78, 98, 143, 118, 102, 98, 122, 131, 152, 179, 209, 255, 230, 202, 174, 148, 142, 181, 210, 235, 252, 235, 234, 224, 203, 170, 183, 201, 205, 198, 181, 134, 157, 171, 173, 153, 145, 138, 120, 93, 63 };
-  const uint8_t  angles[NUM_PIXELS]               { 0, 249, 241, 232, 223, 200, 208, 217, 226, 235, 212, 203, 194, 185, 176, 162, 171, 180, 188, 197, 174, 165, 156, 147, 139, 124, 133, 142, 151, 136, 128, 119, 110, 101, 78, 86, 95, 104, 113, 99, 90, 81, 72, 63, 40, 49, 58, 67, 75, 52, 43, 34, 25, 17, 2, 11, 20, 29, 38, 14, 6, 255, 246, 237 };
+  const uint8_t  coordsX[NUM_PIXELS]             { 140, 189, 208, 214, 208, 146, 168, 180, 180, 162, 152, 146, 129, 103, 72, 40, 70, 97, 120, 131, 107, 79, 50, 23, 0, 7, 23, 46, 76, 93, 57, 37, 28, 29, 87, 68, 59, 62, 80, 113, 91, 94, 109, 133, 202, 172, 145, 125, 117, 145, 170, 198, 227, 253, 255, 235, 210, 181, 148, 175, 207, 228, 240, 244 };
+  const uint8_t  coordsY[NUM_PIXELS]             { 128, 114, 91, 63, 34, 0, 21, 48, 76, 106, 78, 47, 25, 11, 5, 38, 35, 42, 61, 101, 87, 69, 68, 78, 98, 143, 118, 102, 98, 122, 131, 152, 179, 209, 255, 230, 202, 174, 148, 142, 181, 210, 235, 252, 235, 234, 224, 203, 170, 183, 201, 205, 198, 181, 134, 157, 171, 173, 153, 145, 138, 120, 93, 63 };
+  const uint8_t  angles[NUM_PIXELS]              { 0, 249, 241, 232, 223, 200, 208, 217, 226, 235, 212, 203, 194, 185, 176, 162, 171, 180, 188, 197, 174, 165, 156, 147, 139, 124, 133, 142, 151, 136, 128, 119, 110, 101, 78, 86, 95, 104, 113, 99, 90, 81, 72, 63, 40, 49, 58, 67, 75, 52, 43, 34, 25, 17, 2, 11, 20, 29, 38, 14, 6, 255, 246, 237 };
 #elif defined(PRODUCT_FIBONACCI32)
-  const uint8_t  physicalToFibonacci[NUM_PIXELS]  = { 0, 13, 26, 31, 18, 5, 10, 23, 28, 15, 2, 7, 20, 33, 25, 12, 4, 17, 30, 22, 9, 1, 14, 27, 32, 19, 6, 11, 24, 29, 16, 3, 8, 21 };
-  const uint8_t  fibonacciToPhysical[NUM_PIXELS]  = { 0, 21, 10, 31, 16, 5, 26, 11, 32, 20, 6, 27, 15, 1, 22, 9, 30, 17, 4, 25, 12, 33, 19, 7, 28, 14, 2, 23, 8, 29, 18, 3, 24, 13 };
-  const uint8_t  coordsX[NUM_PIXELS]              = { 152, 224, 252, 210, 211, 184, 169, 161, 89, 121, 138, 102, 61, 19, 13, 57, 82, 29, 0, 36, 63, 111, 79, 83, 158, 129, 118, 160, 196, 255, 212, 163, 203, 250 };
-  const uint8_t  coordsY[NUM_PIXELS]              = { 120, 101, 69, 7, 48, 90, 50, 7, 0, 27, 83, 62, 37, 35, 84, 78, 112, 125, 154, 185, 149, 140, 195, 236, 255, 226, 179, 198, 223, 181, 183, 156, 144, 135 };
-  const uint8_t  angles[NUM_PIXELS]               = { 255, 246, 237, 214, 223, 232, 208, 199, 176, 185, 193, 170, 161, 152, 138, 147, 132, 123, 114, 100, 108, 94, 85, 76, 53, 62, 70, 47, 38, 15, 23, 32, 9, 0 };
+  const uint8_t  physicalToFibonacci[NUM_PIXELS] { 0, 13, 26, 31, 18, 5, 10, 23, 28, 15, 2, 7, 20, 33, 25, 12, 4, 17, 30, 22, 9, 1, 14, 27, 32, 19, 6, 11, 24, 29, 16, 3, 8, 21 };
+  const uint8_t  fibonacciToPhysical[NUM_PIXELS] { 0, 21, 10, 31, 16, 5, 26, 11, 32, 20, 6, 27, 15, 1, 22, 9, 30, 17, 4, 25, 12, 33, 19, 7, 28, 14, 2, 23, 8, 29, 18, 3, 24, 13 };
+  const uint8_t  coordsX[NUM_PIXELS]             { 152, 224, 252, 210, 211, 184, 169, 161, 89, 121, 138, 102, 61, 19, 13, 57, 82, 29, 0, 36, 63, 111, 79, 83, 158, 129, 118, 160, 196, 255, 212, 163, 203, 250 };
+  const uint8_t  coordsY[NUM_PIXELS]             { 120, 101, 69, 7, 48, 90, 50, 7, 0, 27, 83, 62, 37, 35, 84, 78, 112, 125, 154, 185, 149, 140, 195, 236, 255, 226, 179, 198, 223, 181, 183, 156, 144, 135 };
+  const uint8_t  angles[NUM_PIXELS]              { 255, 246, 237, 214, 223, 232, 208, 199, 176, 185, 193, 170, 161, 152, 138, 147, 132, 123, 114, 100, 108, 94, 85, 76, 53, 62, 70, 47, 38, 15, 23, 32, 9, 0 };
+#elif defined(PRODUCT_KRAKEN64)
+  const uint8_t  coordsX[NUM_PIXELS]             { 151, 188, 199, 199, 171, 147, 131, 119, 124, 179, 200, 217, 237, 249, 242, 234, 255, 148, 175, 177, 150, 143, 171, 153, 155, 106, 110, 102, 75, 86, 106, 108, 88, 90, 84, 78, 107, 98, 121, 128, 80, 69, 134, 159, 192, 202, 195, 218, 61, 32, 18, 26, 39, 20, 3, 0, 48, 52, 61, 54, 33, 20, 7, 8 };
+  const uint8_t  coordsY[NUM_PIXELS]             { 190, 204, 225, 252, 255, 236, 216, 191, 166, 147, 154, 170, 173, 156, 131, 107, 106, 148, 121, 86, 81, 63, 56, 36, 17, 145, 120, 96, 55, 23, 18, 0, 2, 112, 77, 31, 35, 49, 51, 30, 124, 103, 101, 98, 80, 58, 40, 69, 134, 124, 107, 81, 56, 43, 50, 70, 156, 180, 202, 219, 213, 195, 197, 215 };
+  const uint8_t  angles[NUM_PIXELS]              { 0, 249, 241, 232, 223, 200, 208, 217, 226, 235, 212, 203, 194, 185, 176, 162, 171, 180, 188, 197, 174, 165, 156, 147, 139, 124, 133, 142, 151, 136, 128, 119, 110, 101, 78, 86, 95, 104, 113, 99, 90, 81, 72, 63, 40, 49, 58, 67, 75, 52, 43, 34, 25, 17, 2, 11, 20, 29, 38, 14, 6, 255, 246, 237 };
+  const uint8_t  body[NUM_PIXELS]                { 0, 16, 32, 48, 64, 80, 96, 112, 128, 143, 159, 175, 191, 207, 223, 239, 255, 143, 159, 175, 191, 207, 223, 239, 255, 143, 159, 175, 191, 207, 223, 239, 255, 143, 159, 175, 191, 207, 223, 239, 143, 159, 175, 191, 207, 223, 239, 255, 143, 159, 175, 191, 207, 223, 239, 255, 143, 159, 175, 191, 207, 223, 239, 255 };
+  static_assert(NUM_PIXELS == ARRAY_SIZE2(body), "");
+  // For reference purposes...
+  // const uint8_t head[9]      {  0,  1,  2,  3,  4,  5,  6,  7, 8 };
+  // const uint8_t tentacle0[8] {  9, 10, 11, 12, 13, 14, 15, 16    };
+  // const uint8_t tentacle1[8] { 17, 18, 19, 20, 21, 22, 23, 24    };
+  // const uint8_t tentacle2[8] { 25, 26, 27, 28, 29, 30, 31, 32    };
+  // const uint8_t tentacle3[8] { 33, 34, 35, 36, 37, 38, 39        };
+  // const uint8_t tentacle4[8] { 40, 41, 42, 43, 44, 45, 46, 47    };
+  // const uint8_t tentacle5[8] { 48, 49, 50, 51, 52, 53, 54, 55    };
+  // const uint8_t tentacle6[8] { 56, 57, 58, 59, 60, 61, 62, 63    };
 #else
   #error "Unknown / Unsupported fibonacci product ... no mappings defined"
 #endif
-static_assert(NUM_PIXELS == ARRAY_SIZE2(physicalToFibonacci), "");
-static_assert(NUM_PIXELS == ARRAY_SIZE2(fibonacciToPhysical), "");
-static_assert(NUM_PIXELS == ARRAY_SIZE2(coordsX), "");
-static_assert(NUM_PIXELS == ARRAY_SIZE2(coordsY), "");
-static_assert(NUM_PIXELS == ARRAY_SIZE2(angles), "");
 
-static const uint8_t RADII_SCALE_FACTOR { static_eval<uint8_t, ((NUM_PIXELS-1)/256)+1>::value };
+#if IS_FIBONACCI
+  static_assert(NUM_PIXELS == ARRAY_SIZE2(physicalToFibonacci), "");
+  static_assert(NUM_PIXELS == ARRAY_SIZE2(fibonacciToPhysical), "");
+#endif
+#if HAS_COORDINATE_MAP
+  static_assert(NUM_PIXELS == ARRAY_SIZE2(coordsX), "");
+  static_assert(NUM_PIXELS == ARRAY_SIZE2(coordsY), "");
+  static_assert(NUM_PIXELS == ARRAY_SIZE2(angles), "");
+#endif
 
+// What is HAS_RADIUS_PROXY?  It could be the actual radius, or it could be something
+// that is used "in place of" the radius during effects processing.
+// Use reference to original array; avoids repeating preprocessor checks throughout the code....
+#if defined(PRODUCT_KRAKEN64)
+  #define HAS_RADIUS_PROXY 1
+  static const auto (&radiusProxy)[NUM_PIXELS] = body;
+  static const uint8_t RADII_SCALE_DIVISOR    { 1 }; // body[] values are already in range [0..255]
+  static const uint8_t RADII_SCALE_MULTIPLIER { 1 }; // body[] values are already in range [0..255]
+#elif IS_FIBONACCI
+  #define HAS_RADIUS_PROXY 1
 
+  static const auto (&radiusProxy)[NUM_PIXELS] = physicalToFibonacci;
+
+  static_assert(
+    ((NUM_PIXELS & (NUM_PIXELS-1)) == 0) ||
+    (NUM_PIXELS == 34),
+    "RADII_SCALE_MULTIPLIER / RADII_SCALE_DIVISOR need updates to handle other non-power-of-two NUM_PIXELS"
+    );
+  static const uint8_t RADII_SCALE_DIVISOR    { (NUM_PIXELS <= 256u) ? 1 : (NUM_PIXELS / 256u) };
+  static const uint8_t RADII_SCALE_MULTIPLIER {
+    (NUM_PIXELS >= 256) ? 1 :
+    (NUM_PIXELS ==  34) ? 8 : // Careful .. use saturating multiplier or manually limit to 256...
+    ((NUM_PIXELS & (NUM_PIXELS-1)) == 0) ? (256u/NUM_PIXELS) :
+    0
+  };
+  static_assert(RADII_SCALE_MULTIPLIER != 0, "");
+#else
+  #define HAS_RADIUS_PROXY 0 // default is that this is not supported....
+#endif
+
+#if HAS_RADIUS_PROXY
+  static_assert(HAS_COORDINATE_MAP, "HAS_RADIUS_PROXY also requires coordinate map");
+#endif
+
+#if IS_FIBONACCI // drawSpiralLine() uses angles[] and physicalToFibonacci[]
 void drawSpiralLine(uint8_t angle, int step, CRGB color)
 {
   int startIndex = 0;
@@ -121,76 +173,96 @@ void drawSpiralLine(uint8_t angle, int step, CRGB color)
     f = f - step;
   }
 }
+#endif
 
+#if HAS_RADIUS_PROXY // setPixelAR() uses radiusProxy[]
+// given an angle and radius (and delta for both), set pixels that fall inside that range
 void setPixelAR(uint8_t angle, uint8_t dAngle, uint8_t radius, uint8_t dRadius, CRGB color)
 {
-  uint16_t amax = qadd8(angle, dAngle);
-  uint8_t amin = qsub8(angle, dAngle);
-
-  uint16_t rmax = qadd8(radius, dRadius);
-  uint16_t rmin = qsub8(radius, dRadius);
+  uint8_t endRadius   = qadd8(radius, dRadius);
+  uint8_t startRadius = qsub8(radius, dRadius);
 
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    uint8_t o = i;
-
-    uint8_t ao = angles[o];
-
-    if (ao <= amax && ao >= amin) {
-      uint8_t ro = physicalToFibonacci[o];
-
-      if (ro <= rmax && ro >= rmin) {
+  // TODO: Change from pre-processor defines to `static const bool` values where possible
+    uint8_t ro = radiusProxy[i];
+    // only mess with the pixel when it's radius is within the target radius
+    if (ro <= endRadius && ro >= startRadius) {
+      // Get pixel's angle (unit256)
+      uint8_t ao = angles[i];
+      // set adiff to abs(ao - angle) ... relies on unsigned underflow resulting in larger value
+      uint8_t adiff = min(sub8(ao,angle), sub8(angle, ao));
+      // only mess with the pixel when it's angle is within range of target
+      if (adiff <= dAngle) {
         leds[i] = color;
       }
     }
   }
 }
+#endif
 
+#if HAS_RADIUS_PROXY // andPixelAR() uses radiusProxy[]
+// given an angle and radius (and delta for both), add color to pixels that fall inside that range
 void andPixelAR(uint8_t angle, uint8_t dAngle, uint8_t startRadius, uint8_t endRadius, CRGB color)
 {
-  uint16_t amax = qadd8(angle, dAngle);
-  uint8_t amin = qsub8(angle, dAngle);
-
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    uint8_t o = i;
-
-    uint8_t ao = angles[o];
-
-    if (ao <= amax && ao >= amin) {
-      uint8_t ro = physicalToFibonacci[o];
-
-      if (ro <= endRadius && ro >= startRadius) {
+    uint8_t ro = radiusProxy[i];
+    // only mess with the pixel when it's radius is within the target radius
+    if (ro <= endRadius && ro >= startRadius) {
+      // Get pixel's angle (unit256)
+      uint8_t ao = angles[i];
+      // set adiff to abs(ao - angle) ... relies on unsigned underflow resulting in larger value
+      uint8_t adiff = min(sub8(ao,angle), sub8(angle, ao));
+      // only mess with the pixel when it's angle is within range of target
+      if (adiff <= dAngle) {
         leds[i] += color;
       }
     }
   }
 }
+#endif
 
+#if HAS_RADIUS_PROXY // antialiasPixelAR() uses angles[] and radiusProxy[]
+// given an angle and radius (and delta for both), set pixels that fall inside that range,
+// fading the color from full-color at center, to off (black) at the outer edges.
 void antialiasPixelAR(uint8_t angle, uint8_t dAngle, uint8_t startRadius, uint8_t endRadius, CRGB color, CRGB leds[] = leds, int _NUM_PIXELS = NUM_PIXELS)
 {
+  // NOTE:
+  // An earlier version of this routine had significant bugs.
+  // Do NOT use the version which does qsub8(max(...), min()),
+  // as it does not handle angle overflow well.
+  // This version does it properly:
+  // 1. subtract both ways
+  // 2. note that unsigned underlow will make the negative result really large instead
+  // 3. take smaller value
+  // This is the absolute offset from the target angle
   for (uint16_t i = 0; i < _NUM_PIXELS; i++) {
-    uint8_t o = i;
-
-    uint8_t ao = angles[o];
-
-    uint8_t adiff = min(sub8(ao,angle), sub8(angle, ao));
-    uint8_t fade = map(adiff, 0, dAngle, 0, 255);
-    CRGB faded = color;
-    faded.fadeToBlackBy(fade);
-
-    if (adiff <= dAngle) {
-      uint8_t ro = physicalToFibonacci[o];
-
-      if (ro <= endRadius && ro >= startRadius) {
+    uint8_t ro = radiusProxy[i];
+    // only mess with the pixel when it's radius is within the target radius
+    if (ro <= endRadius && ro >= startRadius) {
+      // Get pixel's angle (unit256)
+      uint8_t ao = angles[i];
+      // set adiff to abs(ao - angle) ... relies on unsigned underflow resulting in larger value
+      uint8_t adiff = min(sub8(ao,angle), sub8(angle, ao));
+      // only mess with the pixel when it's angle is within range of target
+      if (adiff <= dAngle) {
+        // map the intensity of the color so it fades to black at edge of allowed angle
+        uint8_t fade = map(adiff, 0, dAngle, 0, 255);
+        CRGB faded = color;
+        // fade the target color based on how far the angle was from the target
+        faded.fadeToBlackBy(fade);
+        // add the faded color (as an overlay) to existing colors
         leds[i] += faded;
       }
     }
   }
 }
+#endif
 
 // TODO - anglePalette() from Fib32 sets `hues = 256 / NUM_PIXELS' ... which is ZERO(!)
 //        The other similar functions are hard-coded to `hues = 1` even on Fib32.
 //        Likely a bug in Fib32 branch for this one function?
 //        Check if other branches did similar, or set to hard-coded value of 1?
+#if HAS_COORDINATE_MAP // anglePalette() uses angles[]
 void anglePalette() {
   uint16_t hues = 1;
 
@@ -200,16 +272,21 @@ void anglePalette() {
     leds[i] = ColorFromPalette(palettes[currentPaletteIndex], beat8(speed) - (x * hues));
   }
 }
+#endif
 
+// TODO - consider adding pre-computed radii[], enabled anytime HAS_COORDINATE_MAP is true
+#if HAS_RADIUS_PROXY // radiusPalette() uses radiusProxy[]
 void radiusPalette() {
   uint16_t hues = 1;
 
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    uint8_t r = physicalToFibonacci[i] / RADII_SCALE_FACTOR;
+    uint8_t r = ((unsigned)(radiusProxy[i] * RADII_SCALE_MULTIPLIER)) / RADII_SCALE_DIVISOR;
     leds[i] = ColorFromPalette(palettes[currentPaletteIndex], beat8(speed) - (r * hues));
   }
 }
+#endif
 
+#if HAS_COORDINATE_MAP // xPalette() uses coordsX[]
 void xPalette() {
   uint16_t hues = 1;
 
@@ -219,7 +296,9 @@ void xPalette() {
     leds[i] = ColorFromPalette(palettes[currentPaletteIndex], beat8(speed) - (x * hues));
   }
 }
+#endif
 
+#if HAS_COORDINATE_MAP // yPalette() uses coordsY[]
 void yPalette() {
   uint16_t hues = 1;
 
@@ -229,7 +308,9 @@ void yPalette() {
     leds[i] = ColorFromPalette(palettes[currentPaletteIndex], beat8(speed) - (y * hues));
   }
 }
+#endif
 
+#if HAS_COORDINATE_MAP // xyPalette() uses coordsX[] and coordsY[]
 void xyPalette() {
   uint16_t hues = 1;
 
@@ -240,7 +321,9 @@ void xyPalette() {
     leds[i] = ColorFromPalette(palettes[currentPaletteIndex], beat8(speed) - ((x + y) * hues));
   }
 }
+#endif
 
+#if HAS_COORDINATE_MAP // angleGradientPalette() uses angles[]
 void angleGradientPalette() {
   uint16_t hues = 1;
 
@@ -250,17 +333,20 @@ void angleGradientPalette() {
     leds[i] = ColorFromPalette(gCurrentPalette, beat8(speed) - (x * hues));
   }
 }
+#endif
 
+#if HAS_RADIUS_PROXY // radiusGradientPalette() uses radiusProxy[]
 void radiusGradientPalette() {
   uint16_t hues = 1;
 
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    uint8_t r = physicalToFibonacci[i] / RADII_SCALE_FACTOR;
-
+    uint8_t r = ((unsigned)(radiusProxy[i] * RADII_SCALE_MULTIPLIER)) / RADII_SCALE_DIVISOR;
     leds[i] = ColorFromPalette(gCurrentPalette, beat8(speed) - (r * hues));
   }
 }
+#endif
 
+#if HAS_COORDINATE_MAP // xGradientPalette() uses coordsX[]
 void xGradientPalette() {
   uint16_t hues = 1;
 
@@ -270,7 +356,9 @@ void xGradientPalette() {
     leds[i] = ColorFromPalette(gCurrentPalette, beat8(speed) - (x * hues));
   }
 }
+#endif
 
+#if HAS_COORDINATE_MAP // yGradientPalette() uses coordsY[]
 void yGradientPalette() {
   uint16_t hues = 1;
 
@@ -280,7 +368,9 @@ void yGradientPalette() {
     leds[i] = ColorFromPalette(gCurrentPalette, beat8(speed) - (y * hues));
   }
 }
+#endif
 
+#if HAS_COORDINATE_MAP // xyGradientPalette() uses coordsX[] and coordsY[]
 void xyGradientPalette() {
   uint16_t hues = 1;
 
@@ -291,41 +381,36 @@ void xyGradientPalette() {
     leds[i] = ColorFromPalette(gCurrentPalette, beat8(speed) - ((x + y) * hues));
   }
 }
+#endif
 
-// TODO: Fib512 calculates the angles replacing `64` in EVERY_N_MILLIS() with `255`.
-//       Is this a bug in Fib512, or a bug in Fib256 and Fib128?
-
-// TODO: Fib64 has different hard-coded numbers within `drawAnalogClock()` also.
-//       It appears these *might* correspond to maximum radius to draw the corresponding
-//       hand for?  If correct, the definition those magic numbers would need to be added
-//       to the product configuration section.
-
-// calls antialiasPixelAR, which requires physicalToFibonacci array)
+#if IS_FIBONACCI // drawAnalogClock() calls antialiasPixelAR(), which requires physicalToFibonacci[]
 void drawAnalogClock() {
-  float second = timeClient.getSeconds();
-  float minute = timeClient.getMinutes() + (second / 60.0);
-  float hour   = timeClient.getHours()   + (minute / 60.0);
 
-  const uint8_t hourRadius   =  96;
-  const uint8_t minuteRadius = 192;
-  const uint8_t secondRadius = 255;
+  static_assert(NUM_PIXELS >= 32, "Update to drawAnalogClock() required to support fewer pixels");
+  const uint8_t hourRadius   = NUM_PIXELS / 8 * 3; //  96 designed for 256 pixels ==> 3/8
+  const uint8_t minuteRadius = NUM_PIXELS / 4 * 3; // 192 designed for 256 pixels ==> 3/4
+  const uint8_t secondRadius = NUM_PIXELS - 1;     // 255 designed for 256 pixels ==> all pixels
 
-  const uint8_t hourHandWidth   = 8;
-  const uint8_t minuteHandWidth = 7;
-  const uint8_t secondHandWidth = 6;
+  const uint8_t hourHandWidth   = 8; // angle @ unit256 ~= 11.25000 degrees
+  const uint8_t minuteHandWidth = 7; // angle @ unit256 ~=  9.84375 degrees
+  const uint8_t secondHandWidth = 6; // angle @ unit256 ~=  8.43750 degrees
 
-  const float degreesPerSecond = 255.0 / 60.0;
-  const float degreesPerMinute = 255.0 / 60.0;
-  const float degreesPerHour   = 255.0 / 12.0;
+  const float degreesPerSecond = 256.0 / 60.0;
+  const float degreesPerMinute = 256.0 / 60.0;
+  const float degreesPerHour   = 256.0 / 12.0;
 
-  static uint8_t hourAngle   = 255 - hour   * degreesPerHour;
-  static uint8_t minuteAngle = 255 - minute * degreesPerMinute;
-  static uint8_t secondAngle = 255 - second * degreesPerSecond;
+  static uint8_t hourAngle   = 0;
+  static uint8_t minuteAngle = 0;
+  static uint8_t secondAngle = 0;
 
   EVERY_N_MILLIS(100) {
-    hourAngle   = 64 - hour   * degreesPerHour;
-    minuteAngle = 64 - minute * degreesPerMinute;
-    secondAngle = 64 - second * degreesPerSecond;
+    float second = timeClient.getSeconds();
+    float minute = timeClient.getMinutes() + (second / 60.0);
+    float hour   = timeClient.getHours()   + (minute / 60.0);
+
+    hourAngle   = 256u - hour   * degreesPerHour;
+    minuteAngle = 256u - minute * degreesPerMinute;
+    secondAngle = 256u - second * degreesPerSecond;
   }
 
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
@@ -335,130 +420,71 @@ void drawAnalogClock() {
   antialiasPixelAR(hourAngle,   hourHandWidth,   0, hourRadius,   CRGB::Red  );
   leds[0] = CRGB::Red;
 }
-
-// TODO: `drawSpiralAnalogClock()` -- review differences between the Fibonacci boards (e.g., hard-coded radii)
-
-// TODO: `drawSpiralAnalogClock()` -- Optimize more calculations within EVERY_N_MILLIS(100)
-
-// TODO: `drawSpiralAnalogClock()` -- config to disable the seconds hand?
-
-// TODO: `drawSpiralAnalogClock***()` -- disable all the below on boards with less than 128 pixels?
-
-void drawSpiralAnalogClock(uint8_t step) {
-  float second = timeClient.getSeconds();
-  float minute = timeClient.getMinutes() + (second / 60.0);
-  float hour   = timeClient.getHours()   + (minute / 60.0);
-
-  static uint8_t hourAngle   = 0;
-  static uint8_t minuteAngle = 0;
-  static uint8_t secondAngle = 0;
-
-  const float degreesPerSecond = 255.0 / 60.0;
-  const float degreesPerMinute = 255.0 / 60.0;
-  const float degreesPerHour   = 255.0 / 12.0;
-
-  EVERY_N_MILLIS(100) {
-    hourAngle   = 255 - hour   * degreesPerHour;
-    minuteAngle = 255 - minute * degreesPerMinute;
-    secondAngle = 255 - second * degreesPerSecond;
-  }
-
-  drawSpiralLine(secondAngle, step, CRGB(0, 0, 2));
-  drawSpiralLine(minuteAngle, step, CRGB(0, 2, 0));
-  drawSpiralLine(hourAngle,   step, CRGB(2, 0, 0));
-}
-
-// reduces pattern by clockBackgroundFade, then draws clock hands
-void drawSpiralAnalogClock13() {
-  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(13);
-}
-
-void drawSpiralAnalogClock21() {
-  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(21);
-}
-
-void drawSpiralAnalogClock34() {
-  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(34);
-}
-
-void drawSpiralAnalogClock55() {
-  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(55);
-}
-
-void drawSpiralAnalogClock89() {
-  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(89);
-}
-
-void drawSpiralAnalogClock21and34() {
-  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(21);
-  drawSpiralAnalogClock(34);
-}
-
-// TODO: `drawSpiralAnalogClock13_21_and_34()` -- Optimize more calculations within EVERY_N_MILLIS(100)
+#endif
 
 // TODO: `drawSpiralAnalogClock13_21_and_34()` -- config to disable the seconds hand?
 
-// TODO: `drawSpiralAnalogClock()` -- review differences between the Fibonacci boards (e.g., hard-coded radii)
+#if IS_FIBONACCI // drawSpiralAnalogClock*() calls drawSpiralLine(), which requires fibonacci
+void drawSpiralAnalogClock(uint8_t step_h, uint8_t step_m, uint8_t step_s) {
+  static uint8_t hourAngle   = 0;
+  static uint8_t minuteAngle = 0;
+  static uint8_t secondAngle = 0;
 
+  const float degreesPerSecond = 256.0 / 60.0;
+  const float degreesPerMinute = 256.0 / 60.0;
+  const float degreesPerHour   = 256.0 / 12.0;
+
+  EVERY_N_MILLIS(100) {
+    float second = timeClient.getSeconds();
+    float minute = timeClient.getMinutes() + (second / 60.0);
+    float hour   = timeClient.getHours()   + (minute / 60.0);
+
+    hourAngle   = 256u - hour   * degreesPerHour;
+    minuteAngle = 256u - minute * degreesPerMinute;
+    secondAngle = 256u - second * degreesPerSecond;
+  }
+
+  drawSpiralLine(secondAngle, step_s, CRGB(0, 0, 2));
+  drawSpiralLine(minuteAngle, step_m, CRGB(0, 2, 0));
+  drawSpiralLine(hourAngle,   step_h, CRGB(2, 0, 0));
+}
+void drawSpiralAnalogClock(uint8_t step) {
+  drawSpiralAnalogClock(step, step, step);
+}
+void drawSpiralAnalogClock13() {
+  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
+  drawSpiralAnalogClock(13, 13, 13);
+}
+void drawSpiralAnalogClock21() {
+  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
+  drawSpiralAnalogClock(21, 21, 21);
+}
+void drawSpiralAnalogClock34() {
+  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
+  drawSpiralAnalogClock(34, 34, 34);
+}
+void drawSpiralAnalogClock55() {
+  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
+  drawSpiralAnalogClock(55, 55, 55);
+}
+void drawSpiralAnalogClock89() {
+  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
+  drawSpiralAnalogClock(89, 89, 89);
+}
+void drawSpiralAnalogClock21and34() {
+  fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
+  drawSpiralAnalogClock(21, 21, 21);
+  drawSpiralAnalogClock(34, 34, 34);
+}
 void drawSpiralAnalogClock13_21_and_34() {
-  float second = timeClient.getSeconds();
-  float minute = timeClient.getMinutes() + (second / 60.0);
-  float hour   = timeClient.getHours()   + (minute / 60.0);
-
-  static uint8_t hourAngle   = 0;
-  static uint8_t minuteAngle = 0;
-  static uint8_t secondAngle = 0;
-
-  const float degreesPerSecond = 255.0 / 60.0;
-  const float degreesPerMinute = 255.0 / 60.0;
-  const float degreesPerHour   = 255.0 / 12.0;
-
-  EVERY_N_MILLIS(100) {
-    hourAngle   = 255 - hour * degreesPerHour;
-    minuteAngle = 255 - minute * degreesPerMinute;
-    secondAngle = 255 - second * degreesPerSecond;
-  }
-
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-
-  drawSpiralLine(secondAngle, 13, CRGB(0, 0, 2));
-  drawSpiralLine(minuteAngle, 21, CRGB(0, 2, 0));
-  drawSpiralLine(hourAngle,   34, CRGB(2, 0, 0));
+  drawSpiralAnalogClock(34, 21, 13);
 }
-
-// TODO: Optimize this so more calculations are within EVERY_N_MILLIS(100)
-// TODO: Allow configuration to disable the seconds hand
 void drawSpiralAnalogClock34_21_and_13() {
-  float second = timeClient.getSeconds();
-  float minute = timeClient.getMinutes() + (second / 60.0);
-  float hour   = timeClient.getHours()   + (minute / 60.0);
-
-  static uint8_t hourAngle   = 0;
-  static uint8_t minuteAngle = 0;
-  static uint8_t secondAngle = 0;
-
-  const float degreesPerSecond = 255.0 / 60.0;
-  const float degreesPerMinute = 255.0 / 60.0;
-  const float degreesPerHour   = 255.0 / 12.0;
-
-  EVERY_N_MILLIS(100) {
-    hourAngle   = 255 - hour   * degreesPerHour;
-    minuteAngle = 255 - minute * degreesPerMinute;
-    secondAngle = 255 - second * degreesPerSecond;
-  }
-
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-
-  drawSpiralLine(secondAngle, 34, CRGB(0, 0, 2));
-  drawSpiralLine(minuteAngle, 21, CRGB(0, 2, 0));
-  drawSpiralLine(hourAngle,   13, CRGB(2, 0, 0));
+  drawSpiralAnalogClock(13, 21, 34);
 }
+#endif
 
 
-#endif // IS_FIBONACCI
+#endif // IS_FIBONACCI || HAS_COORDINATE_MAP

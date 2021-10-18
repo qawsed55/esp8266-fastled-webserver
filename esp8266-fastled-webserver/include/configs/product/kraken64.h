@@ -17,8 +17,8 @@
 */
 #pragma once
 
-#if !defined(ESP8266_FASTLED_WEBSERVER_PRODUCT_FIB64_H)
-#define ESP8266_FASTLED_WEBSERVER_PRODUCT_FIB64_H
+#if !defined(ESP8266_FASTLED_WEBSERVER_PRODUCT_KRAKEN64_H)
+#define ESP8266_FASTLED_WEBSERVER_PRODUCT_KRAKEN64_H
 
 // FIBONACCI64 comes in multiple variants:
 //   Full  (86mm) ==> ESP8266, WS2812B-5050 == ~60mA / pixel, no touch support built-in
@@ -45,16 +45,8 @@
 //       Nano:  A0, A1, A2
 //
 
-#if defined(PRODUCT_FIBONACCI64_MICRO) || defined(PRODUCT_FIBONACCI64_NANO)
-   #error "The Fibonacci64 micro and nano are not yet supported."
-#endif
-
 #if !defined(LED_TYPE)
-   #if defined(PRODUCT_FIBONACCI64_NANO)
-      #define LED_TYPE                  SK6812
-   #else
-      #define LED_TYPE                  WS2812B
-   #endif
+   #define LED_TYPE                      WS2812B
 #endif
 #if !defined(COLOR_ORDER)
    #define COLOR_ORDER                   GRB
@@ -66,17 +58,13 @@
    #define AVAILABLE_MILLI_AMPS          1400 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
 #endif
 #if !defined(MAX_MILLI_AMPS_PER_PIXEL)
-   #if defined(PRODUCT_FIBONACCI64_MICRO) || defined(PRODUCT_FIBONACCI64_NANO)
-      #define MAX_MILLI_AMPS_PER_PIXEL   5    // IMPORTANT: set to larger value if necessary
-   #else
-      #define MAX_MILLI_AMPS_PER_PIXEL   60   // IMPORTANT: set to larger value if necessary
-   #endif
+   #define MAX_MILLI_AMPS_PER_PIXEL      60   // IMPORTANT: set to larger value if necessary
 #endif
 #if !defined(FRAMES_PER_SECOND)
    #define FRAMES_PER_SECOND             120
 #endif
 #if !defined(DEFAULT_PATTERN_INDEX)
-   #define DEFAULT_PATTERN_INDEX         3
+   #define DEFAULT_PATTERN_INDEX         0
 #endif
 #if !defined(DEFAULT_BRIGHTNESS_INDEX)
    #define DEFAULT_BRIGHTNESS_INDEX      3
@@ -85,23 +73,13 @@
    #define DEFAULT_COLOR_CORRECTION      TypicalSMD5050
 #endif
 #if !defined(NAME_PREFIX)
-   #define NAME_PREFIX                   "Fibonacci64-"
+   #define NAME_PREFIX                   "Kraken64-"
 #endif
 #if !defined(PRODUCT_FRIENDLY_NAME)
-
-   #if   defined(PRODUCT_FIBONACCI64_FULL)
-      #define PRODUCT_FRIENDLY_NAME      "Fibonacci64"
-   #elif defined(PRODUCT_FIBONACCI64_MINI)
-      #define PRODUCT_FRIENDLY_NAME      "Fibonacci64 Mini"
-   #elif defined(PRODUCT_FIBONACCI64_MICRO)
-      #define PRODUCT_FRIENDLY_NAME      "Fibonacci64 Micro"
-   #elif defined(PRODUCT_FIBONACCI64_NANO)
-      #define PRODUCT_FRIENDLY_NAME      "Fibonacci64 Nano"
-   #endif
-
+   #define PRODUCT_FRIENDLY_NAME         "Kraken64"
 #endif
 #if !defined(IS_FIBONACCI)
-   #define IS_FIBONACCI                  1
+   #define IS_FIBONACCI                  0
 #endif
 #if !defined(HAS_COORDINATE_MAP)
    #define HAS_COORDINATE_MAP            1
@@ -111,4 +89,4 @@
 #endif
 
 
-#endif // ESP8266_FASTLED_WEBSERVER_PRODUCT_FIB64_H
+#endif // ESP8266_FASTLED_WEBSERVER_PRODUCT_KRAKEN64_H

@@ -84,9 +84,14 @@ extern String nameString;
     extern const uint8_t physicalToFibonacci [NUM_PIXELS];
     extern const uint8_t fibonacciToPhysical [NUM_PIXELS];
   #endif
-  extern const uint8_t  coordsX[NUM_PIXELS];
-  extern const uint8_t  coordsY[NUM_PIXELS];
-  extern const uint8_t  angles[NUM_PIXELS];
+#elif defined(PRODUCT_KRAKEN64)
+  extern const uint8_t  body    [NUM_PIXELS];
+#endif
+
+#if HAS_COORDINATE_MAP
+  extern const uint8_t  coordsX [NUM_PIXELS];
+  extern const uint8_t  coordsY [NUM_PIXELS];
+  extern const uint8_t  angles  [NUM_PIXELS];
 #endif
 
 // Structures

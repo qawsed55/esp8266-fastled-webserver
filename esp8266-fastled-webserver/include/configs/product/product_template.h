@@ -87,25 +87,32 @@
    #define PRODUCT_FRIENDLY_NAME         "ESP8266 + FastLED"
 #endif
 
-// IS_FIBONACCI is true when there are fibonacci-specific definitions for the product.
-// TODO: Consider splitting to two variables:
-//       1. HAS_LED_MAP
-//          Indicates existence of coordsX[], coordsY[] and angles[]
-//       2. IS_FIBONACCI
-//          Implies HAS_LED_MAP, plus physicalToFibonacci[] and fibonacciToPhysical[]
+// IS_FIBONACCI is true when there are pre-defined mappings from physical pixel
+// indices to Vogel order (which is also order of increasing radius),
+// and the inverse mapping from Vogel order back to physical pixel index.
+// IS_FIBONACCI also implies HAS_COORDINATE_MAP.
 //
 // When this is true, the following must be defined in map.h:
 //
 // const uint8_t physicalToFibonacci[NUM_PIXELS];
 // const uint8_t fibonacciToPhysical[NUM_PIXELS];
-// const uint8_t coordsX[NUM_PIXELS];
-// const uint8_t coordsY[NUM_PIXELS];
-// const uint8_t angles[NUM_PIXELS];
 //
 // NOTE: physicalToFibonacci[] and fibonacciToPhysical[] are uint16_t when
 //       NUM_PIXELS is greater than 256.
 #if !defined(IS_FIBONACCI)
    #define IS_FIBONACCI                  1
+#endif
+
+// HAS_COORDINATE_MAP is true when there are mappings to define
+// both the X,Y coordinates and the angles for each pixel.
+//
+// When this is true, the following must be defined in map.h:
+//
+// const uint8_t coordsX[NUM_PIXELS];
+// const uint8_t coordsY[NUM_PIXELS];
+// const uint8_t angles[NUM_PIXELS];
+#if !defined(HAS_COORDINATE_MAP)
+   #define HAS_COORDINATE_MAP            1
 #endif
 
 // PARALLEL_OUTPUT_CHANNELS indicates the number of independent channels

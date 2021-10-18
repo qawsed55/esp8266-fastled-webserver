@@ -24,7 +24,7 @@
 // When compiling from Arduino, you can edit this file.
 // When compiling from PlatformIO, this is a reference for compiler flags.
 
-#define PRODUCT_DEFAULT
+// #define PRODUCT_DEFAULT
 // #define PRODUCT_FIBONACCI512
 // #define PRODUCT_FIBONACCI256
 // #define PRODUCT_FIBONACCI128
@@ -33,6 +33,8 @@
 // #define PRODUCT_FIBONACCI64_MICRO // 40mm, WS2812C-2020,  ~5mA/pixel
 // #define PRODUCT_FIBONACCI64_NANO  // 33mm, SK6805-EC15,   ~5mA/pixel
 // #define PRODUCT_FIBONACCI32
+#define PRODUCT_KRAKEN64
+
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Additional configuration options ... defaults shown
@@ -49,6 +51,8 @@
     // Product-specific configuration
     #if defined(PRODUCT_DEFAULT)
         #include "include\configs\product\default.h"
+    #elif defined(PRODUCT_KRAKEN64)
+        #include "include\configs\product\kraken64.h"
     #elif defined(PRODUCT_FIBONACCI32)
         #include "include\configs\product\fibonacci32.h"
     #elif defined(PRODUCT_FIBONACCI64_FULL) || defined(PRODUCT_FIBONACCI64_MINI) || defined(PRODUCT_FIBONACCI64_MICRO) || defined(PRODUCT_FIBONACCI64_NANO)
@@ -125,6 +129,12 @@
     // IS_FIBONACCI: There does not appear to be a way to check, at compile-time here, if requirements are met
     #if !defined(IS_FIBONACCI) || ((IS_FIBONACCI != 0) && (IS_FIBONACCI != 1))
         #error "IS_FIBONACCI must be defined to zero or one"
+    #endif
+    #if !defined(HAS_COORDINATE_MAP) || ((HAS_COORDINATE_MAP != 0) && (HAS_COORDINATE_MAP != 1))
+        #error "HAS_COORDINATE_MAP must be defined to zero or one"
+    #endif
+    #if IS_FIBONACCI && (!HAS_COORDINATE_MAP)
+        #error "IS_FIBONACCI is true, so HAS_COORDINATE_MAP must also be true (but is not)"
     #endif
     #if !defined(PARALLEL_OUTPUT_CHANNELS)
         #error "PARALLEL_OUTPUT_CHANNELS must be defined"

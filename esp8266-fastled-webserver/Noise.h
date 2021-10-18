@@ -16,9 +16,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// drawNoise() function uses coordsX / coordsY, which are only available for Fibonacci boards
-#if IS_FIBONACCI
-
+// drawNoise() function uses coordsX / coordsY
+#if HAS_COORDINATE_MAP
 
 // TODO: static assert that the values here correspond to the maximum storable value
 //       used by the typeof(coordsX) and typeof(coordsY).
@@ -201,4 +200,4 @@ void blackAndBlueNoise() {
 }
 
 
-#endif // IS_FIBONACCI
+#endif // HAS_COORDINATE_MAP

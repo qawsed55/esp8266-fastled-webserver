@@ -56,6 +56,9 @@
 #if !defined(IS_FIBONACCI)
    #define IS_FIBONACCI                  1
 #endif
+#if !defined(HAS_COORDINATE_MAP)
+   #define HAS_COORDINATE_MAP            1
+#endif
 #if !defined(PARALLEL_OUTPUT_CHANNELS)
    #define PARALLEL_OUTPUT_CHANNELS      4
 #endif

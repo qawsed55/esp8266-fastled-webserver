@@ -137,7 +137,9 @@ PatternAndNameList patterns = {
 
   { pacifica_loop,                     "Pacifica" },
   { pacifica_fibonacci_loop,           "Pacifica Fibonacci" },
+#endif
 
+#if IS_FIBONACCI || HAS_COORDINATE_MAP
   // matrix patterns
   { anglePalette,                      "Angle Palette" },
   { radiusPalette,                     "Radius Palette" },
@@ -150,7 +152,9 @@ PatternAndNameList patterns = {
   { xGradientPalette,                  "X Axis Gradient Palette" },
   { yGradientPalette,                  "Y Axis Gradient Palette" },
   { xyGradientPalette,                 "XY Axis Gradient Palette" },
+#endif
 
+#if HAS_COORDINATE_MAP
   // noise patterns
   { fireNoise,                         "Fire Noise" },
   { fireNoise2,                        "Fire Noise 2" },
@@ -163,7 +167,9 @@ PatternAndNameList patterns = {
   { oceanNoise,                        "Ocean Noise" },
   { blackAndWhiteNoise,                "Black & White Noise" },
   { blackAndBlueNoise,                 "Black & Blue Noise" },
+#endif
 
+#if IS_FIBONACCI
   { drawAnalogClock,                   "Analog Clock" },
 
   { drawSpiralAnalogClock13,           "Spiral Analog Clock 13" },
@@ -179,6 +185,12 @@ PatternAndNameList patterns = {
 
   { pridePlayground,        "Pride Playground" },
   { colorWavesPlayground,   "Color Waves Playground" },
+
+#if defined(PRODUCT_KRAKEN64)
+  // Kraken patterns ... these use body[], which is also used as a proxy for radius...
+  { radiusPalette,             "Kraken Palette" },
+  { radiusGradientPalette,     "Kraken Gradient Palette" },
+#endif
 
   // twinkle patterns
   { rainbowTwinkles,        "Rainbow Twinkles" },
@@ -1005,6 +1017,50 @@ void loop() {
 
 // TODO: Update magic number from 0x55 to 0xAA (or 0x96 or 0x69)
 
+void readSettingsKraken64()
+{
+  // check for "magic number" so we know settings have been written to EEPROM
+  // and it's not just full of random bytes
+
+  if (EEPROM.read(511) != 55) {
+    return;
+  }
+
+  brightness = EEPROM.read(0);
+
+  currentPatternIndex = EEPROM.read(1);
+  if (currentPatternIndex >= patternCount) {
+    currentPatternIndex = patternCount - 1;
+  }
+
+  byte r = EEPROM.read(2);
+  byte g = EEPROM.read(3);
+  byte b = EEPROM.read(4);
+
+  if (r == 0 && g == 0 && b == 0)
+  {
+  }
+  else
+  {
+    solidColor = CRGB(r, g, b);
+  }
+
+  power = EEPROM.read(5);
+
+  autoplay = EEPROM.read(6);
+  autoplayDuration = EEPROM.read(7);
+
+  currentPaletteIndex = EEPROM.read(8);
+  if (currentPaletteIndex >= paletteCount) {
+    currentPaletteIndex = paletteCount - 1;
+  }
+
+  twinkleSpeed = EEPROM.read(9);
+  twinkleDensity = EEPROM.read(10);
+
+  cooling = EEPROM.read(11);
+  sparking = EEPROM.read(12);
+}
 void readSettingsFib32()
 {
   // check for "magic number" so we know settings have been written to EEPROM
@@ -1280,7 +1336,9 @@ void readSettingsDefaultProduct()
 }
 
 void readSettings() {
-  #if defined(PRODUCT_FIBONACCI512)
+  #if defined(PRODUCT_KRAKEN64)
+    readSettingsKraken64();
+  #elif defined(PRODUCT_FIBONACCI512)
     readSettingsFib512();
   #elif defined(PRODUCT_FIBONACCI256)
     readSettingsFib256();
@@ -1297,6 +1355,25 @@ void readSettings() {
   #endif
 }
 
+void writeAndCommitSettingsKraken64()
+{
+  EEPROM.write(0, brightness);
+  EEPROM.write(1, currentPatternIndex);
+  EEPROM.write(2, solidColor.r);
+  EEPROM.write(3, solidColor.g);
+  EEPROM.write(4, solidColor.b);
+  EEPROM.write(5, power);
+  EEPROM.write(6, autoplay);
+  EEPROM.write(7, autoplayDuration);
+  EEPROM.write(8, currentPaletteIndex);
+  EEPROM.write(9, twinkleSpeed);
+  EEPROM.write(10, twinkleDensity);
+  EEPROM.write(11, cooling);
+  EEPROM.write(12, sparking);
+
+  EEPROM.write(511, 55);
+  EEPROM.commit();
+}
 void writeAndCommitSettingsFib32()
 {
   EEPROM.write(0, brightness);
@@ -1392,7 +1469,6 @@ void writeAndCommitSettingsFib512()
   EEPROM.write(511, 55);
   EEPROM.commit();
 }
-
 void writeAndCommitSettingsDefaultProduct()
 {
   EEPROM.write(0, brightness);
@@ -1415,7 +1491,9 @@ void writeAndCommitSettingsDefaultProduct()
 
 void writeAndCommitSettings()
 {
-  #if defined(PRODUCT_FIBONACCI512)
+  #if defined(PRODUCT_KRAKEN64)
+    writeAndCommitSettingsKraken64();
+  #elif defined(PRODUCT_FIBONACCI512)
     writeAndCommitSettingsFib512();
   #elif defined(PRODUCT_FIBONACCI256)
     writeAndCommitSettingsFib256();
