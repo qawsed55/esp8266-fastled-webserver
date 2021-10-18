@@ -127,7 +127,10 @@ PatternAndNameList patterns = {
   { colorWavesPlaygroundFibonacci,     "Color Waves Playground Fibonacci" },
 #endif
 
-  { wheel,                             "Wheel" },
+  { wheel,                  "Wheel" },
+#if (PARALLEL_OUTPUT_CHANNELS > 1)
+  { multi_test,             "Multi Test" },
+#endif
 
 #if IS_FIBONACCI
   { swirlFibonacci,                    "Swirl Fibonacci"},
@@ -278,6 +281,12 @@ constexpr int LedOffset() {
   #if PARALLEL_OUTPUT_CHANNELS >= 4
     + ((ONE_BASED_OUTPUT_CHANNEL >= 4) ? PIXELS_ON_DATA_PIN_3 : 0)
   #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 5
+    + ((ONE_BASED_OUTPUT_CHANNEL >= 5) ? PIXELS_ON_DATA_PIN_4 : 0)
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 6
+    + ((ONE_BASED_OUTPUT_CHANNEL >= 6) ? PIXELS_ON_DATA_PIN_5 : 0)
+  #endif
   ;
 }
 template <size_t ONE_BASED_OUTPUT_CHANNEL>
@@ -288,6 +297,12 @@ constexpr int LedCount() {
     return NUM_PIXELS;
   #else
     return // this would be much simpler with C++14
+    #if PARALLEL_OUTPUT_CHANNELS >= 6
+      (ONE_BASED_OUTPUT_CHANNEL == 6) ? PIXELS_ON_DATA_PIN_6 :
+    #endif
+    #if PARALLEL_OUTPUT_CHANNELS >= 5
+      (ONE_BASED_OUTPUT_CHANNEL == 5) ? PIXELS_ON_DATA_PIN_5 :
+    #endif
     #if PARALLEL_OUTPUT_CHANNELS >= 4
       (ONE_BASED_OUTPUT_CHANNEL == 4) ? PIXELS_ON_DATA_PIN_4 :
     #endif
@@ -326,6 +341,12 @@ void setup() {
   #endif
   #if PARALLEL_OUTPUT_CHANNELS >= 4
   FastLED.addLeds<LED_TYPE, DATA_PIN_4, COLOR_ORDER>(leds, LedOffset<4>(), LedCount<4>());
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 5
+  FastLED.addLeds<LED_TYPE, DATA_PIN_5, COLOR_ORDER>(leds, LedOffset<5>(), LedCount<4>());
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 6
+  FastLED.addLeds<LED_TYPE, DATA_PIN_6, COLOR_ORDER>(leds, LedOffset<6>(), LedCount<4>());
   #endif
   #endif // PARALLEL_OUTPUT_CHANNELS
 
@@ -1017,6 +1038,44 @@ void loop() {
 
 // TODO: Update magic number from 0x55 to 0xAA (or 0x96 or 0x69)
 
+void readSettingsEsp8266Thing() // aka parallel
+{
+  // check for "magic number" so we know settings have been written to EEPROM
+  // and it's not just full of random bytes
+
+  if (EEPROM.read(511) != 55) {
+    return;
+  }
+
+  brightness = EEPROM.read(0);
+
+  currentPatternIndex = EEPROM.read(1);
+  if (currentPatternIndex >= patternCount) {
+    currentPatternIndex = patternCount - 1;
+  }
+
+  byte r = EEPROM.read(2);
+  byte g = EEPROM.read(3);
+  byte b = EEPROM.read(4);
+
+  if (r == 0 && g == 0 && b == 0)
+  {
+  }
+  else
+  {
+    solidColor = CRGB(r, g, b);
+  }
+
+  power = EEPROM.read(5);
+
+  autoplay = EEPROM.read(6);
+  autoplayDuration = EEPROM.read(7);
+
+  currentPaletteIndex = EEPROM.read(8);
+  if (currentPaletteIndex >= paletteCount) {
+    currentPaletteIndex = paletteCount - 1;
+  }
+}
 void readSettingsKraken64()
 {
   // check for "magic number" so we know settings have been written to EEPROM
@@ -1336,7 +1395,9 @@ void readSettingsDefaultProduct()
 }
 
 void readSettings() {
-  #if defined(PRODUCT_KRAKEN64)
+  #if defined(PRODUCT_ESP8266_THING)
+    readSettingsEsp8266Thing();
+  #elif defined(PRODUCT_KRAKEN64)
     readSettingsKraken64();
   #elif defined(PRODUCT_FIBONACCI512)
     readSettingsFib512();
@@ -1355,6 +1416,25 @@ void readSettings() {
   #endif
 }
 
+void writeAndCommitSettingsEsp8266Thing() // aka parallel
+{
+  EEPROM.write(0, brightness);
+  EEPROM.write(1, currentPatternIndex);
+  EEPROM.write(2, solidColor.r);
+  EEPROM.write(3, solidColor.g);
+  EEPROM.write(4, solidColor.b);
+  EEPROM.write(5, power);
+  EEPROM.write(6, autoplay);
+  EEPROM.write(7, autoplayDuration);
+  EEPROM.write(8, currentPaletteIndex);
+  EEPROM.write(9, twinkleSpeed);
+  EEPROM.write(10, twinkleDensity);
+  EEPROM.write(11, cooling);
+  EEPROM.write(12, sparking);
+
+  EEPROM.write(511, 55);
+  EEPROM.commit();
+}
 void writeAndCommitSettingsKraken64()
 {
   EEPROM.write(0, brightness);
@@ -1491,7 +1571,9 @@ void writeAndCommitSettingsDefaultProduct()
 
 void writeAndCommitSettings()
 {
-  #if defined(PRODUCT_KRAKEN64)
+  #if defined(PRODUCT_ESP8266_THING)
+    writeAndCommitSettingsEsp8266Thing();
+  #elif defined(PRODUCT_KRAKEN64)
     writeAndCommitSettingsKraken64();
   #elif defined(PRODUCT_FIBONACCI512)
     writeAndCommitSettingsFib512();
@@ -2119,3 +2201,63 @@ void wheel() {
     leds[i] = CHSV(hue, 255, 255);
   }
 }
+
+
+#if (PARALLEL_OUTPUT_CHANNELS > 1)
+void multi_test() {
+  static bool debug = true;
+  const uint8_t step = (256 / PARALLEL_OUTPUT_CHANNELS);
+
+  if (debug) {
+    Serial.print("step: ");
+    Serial.println(step);
+  }
+
+  static_assert(PARALLEL_OUTPUT_CHANNELS <= 6, "");
+  for (uint8_t strip = 0; strip < PARALLEL_OUTPUT_CHANNELS; strip++) {
+    uint16_t pixelOffset;
+    uint16_t pixelCount;
+    if (strip == 0) {
+      pixelOffset = LedOffset<1>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<1>();  // uses one-based indices... sigh.
+    } else if (strip == 1) {
+      pixelOffset = LedOffset<2>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<2>();  // uses one-based indices... sigh.
+    } else if (strip == 2) {
+      pixelOffset = LedOffset<3>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<3>();  // uses one-based indices... sigh.
+    } else if (strip == 3) {
+      pixelOffset = LedOffset<4>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<4>();  // uses one-based indices... sigh.
+    } else if (strip == 4) {
+      pixelOffset = LedOffset<5>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<5>();  // uses one-based indices... sigh.
+    } else if (strip == 5) {
+      pixelOffset = LedOffset<6>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<6>();  // uses one-based indices... sigh. 
+    } else {
+      break;
+    }
+
+    uint8_t hue = gHue + strip * step;
+    CHSV c = CHSV(hue, 255, 255);
+    
+    if (debug) {
+      Serial.print("hue: ");
+      Serial.println(hue);
+    }
+
+    for (uint16_t i = 0; i < pixelCount; i++) {
+      uint16_t j = i + pixelOffset;
+      leds[j] = c;
+
+      if (debug) {
+        Serial.print("j: ");
+        Serial.println(j);
+      }
+    }
+  }
+
+  debug = false;
+}
+#endif

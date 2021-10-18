@@ -33,7 +33,8 @@
 // #define PRODUCT_FIBONACCI64_MICRO // 40mm, WS2812C-2020,  ~5mA/pixel
 // #define PRODUCT_FIBONACCI64_NANO  // 33mm, SK6805-EC15,   ~5mA/pixel
 // #define PRODUCT_FIBONACCI32
-#define PRODUCT_KRAKEN64
+// #define PRODUCT_KRAKEN64
+#define PRODUCT_ESP8266_THING // aka parallel (6-output)
 
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,6 +64,8 @@
         #include "include\configs\product\fibonacci256.h"
     #elif defined(PRODUCT_FIBONACCI512)
         #include "include\configs\product\fibonacci512.h"
+    #elif defined(PRODUCT_ESP8266_THING) // aka parallel
+        #include "include\configs\product\esp8266_thing.h"
     #else
         #error "Must define product to build against"
     #endif
@@ -70,8 +73,10 @@
     // Board-specific configuration
     #if defined(ARDUINO_ARCH_ESP32)
         #include "include\configs\controller\controller_esp32.h"
-    #else
+    #elif defined(ARDUINO_ARCH_ESP8266)
         #include "include\configs\controller\controller_esp8266.h"
+    #else
+        #error "Unknown board type ... currently only support ESP8266 and ESP32"
     #endif
 #endif
 
@@ -142,8 +147,10 @@
         // nothing to test here
     #elif (PARALLEL_OUTPUT_CHANNELS == 4)
         static_assert(NUM_PIXELS == (PIXELS_ON_DATA_PIN_1 + PIXELS_ON_DATA_PIN_2 + PIXELS_ON_DATA_PIN_3 + PIXELS_ON_DATA_PIN_4), "");
+    #elif (PARALLEL_OUTPUT_CHANNELS == 6)
+        static_assert(NUM_PIXELS == (PIXELS_ON_DATA_PIN_1 + PIXELS_ON_DATA_PIN_2 + PIXELS_ON_DATA_PIN_3 + PIXELS_ON_DATA_PIN_4 + PIXELS_ON_DATA_PIN_5 + PIXELS_ON_DATA_PIN_6), "");
     #else
-        #error "PARALLEL_OUTPUT_CHANNELS currently tested only with values 1 or 4."
+        #error "PARALLEL_OUTPUT_CHANNELS currently tested only with values 1, 4, or 6."
     #endif
     #if (UTC_OFFSET_IN_SECONDS < (-14L * 60L * 60L))
         #error "UTC_OFFSET_IN_SECONDS offset does not appear correct (< -14H) ... Note it is defined in seconds."
