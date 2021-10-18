@@ -52,6 +52,8 @@
     // Product-specific configuration
     #if defined(PRODUCT_DEFAULT)
         #include "include\configs\product\default.h"
+    #elif defined(PRODUCT_1628_RINGS)
+        #include "include\configs\product\1628rings.h"
     #elif defined(PRODUCT_KRAKEN64)
         #include "include\configs\product\kraken64.h"
     #elif defined(PRODUCT_FIBONACCI32)
@@ -141,6 +143,9 @@
     #if IS_FIBONACCI && (!HAS_COORDINATE_MAP)
         #error "IS_FIBONACCI is true, so HAS_COORDINATE_MAP must also be true (but is not)"
     #endif
+    #if !defined(HAS_POLAR_COORDS) || ((HAS_POLAR_COORDS != 0) && (HAS_POLAR_COORDS != 1))
+        #error "HAS_POLAR_COORDS must be defined to zero or one"
+    #endif
     #if !defined(PARALLEL_OUTPUT_CHANNELS)
         #error "PARALLEL_OUTPUT_CHANNELS must be defined"
     #elif (PARALLEL_OUTPUT_CHANNELS == 1)
@@ -160,7 +165,6 @@
     #if (NTP_UPDATE_THROTTLE_MILLLISECONDS < (15UL * 1000UL))
         #error "NTP_UPDATE_THROTTLE_MILLLISECONDS less than 15 seconds ... may exceed rate limits"
     #endif
-
 #endif
 
 
