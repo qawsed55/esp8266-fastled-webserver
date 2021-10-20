@@ -117,6 +117,25 @@ PatternAndNameList patterns = {
 
   { colorWaves,             "Color Waves" },
 
+#if HAS_POLAR_COORDS // really a wrong name... and likely doing way more computation than necessary
+  { radarSweepPalette, "Radar Sweep Palette" },
+  // noise patterns (XY and Polar variations)
+  { gradientPalettePolarNoise, "Gradient Palette Polar Noise" },
+  { palettePolarNoise, "Palette Polar Noise" },
+  { firePolarNoise, "Fire Polar Noise" },
+  { firePolarNoise2, "Fire Polar Noise 2" },
+  { lavaPolarNoise, "Lava Polar Noise" },
+  { rainbowPolarNoise, "Rainbow Polar Noise" },
+  { rainbowStripeNoise, "Rainbow Stripe Noise" },
+  { rainbowStripePolarNoise, "Rainbow Stripe Polar Noise" },
+  { partyPolarNoise, "Party Polar Noise" },
+  { forestPolarNoise, "Forest Polar Noise" },
+  { cloudPolarNoise, "Cloud Polar Noise" },
+  { oceanPolarNoise, "Ocean Polar Noise" },
+  { blackAndWhitePolarNoise, "Black & White Polar Noise" },
+  { blackAndBluePolarNoise, "Black & Blue Polar Noise" },
+#endif
+
 #if IS_FIBONACCI
   { colorWavesFibonacci,               "Color Waves Fibonacci" },
 
@@ -1038,6 +1057,47 @@ void loop() {
 
 // TODO: Update magic number from 0x55 to 0xAA (or 0x96 or 0x69)
 
+void readSettings1628Rings()
+{
+  // check for "magic number" so we know settings have been written to EEPROM
+  // and it's not just full of random bytes
+
+  if (EEPROM.read(511) != 55) {
+    return;
+  }
+
+  brightness = EEPROM.read(0);
+
+  currentPatternIndex = EEPROM.read(1);
+  if (currentPatternIndex >= patternCount) {
+    currentPatternIndex = patternCount - 1;
+  }
+
+  byte r = EEPROM.read(2);
+  byte g = EEPROM.read(3);
+  byte b = EEPROM.read(4);
+
+  if (r == 0 && g == 0 && b == 0)
+  {
+  }
+  else
+  {
+    solidColor = CRGB(r, g, b);
+  }
+
+  power = EEPROM.read(5);
+
+  autoplay = EEPROM.read(6);
+  autoplayDuration = EEPROM.read(7);
+
+  currentPaletteIndex = EEPROM.read(8);
+  if (currentPaletteIndex >= paletteCount) {
+    currentPaletteIndex = paletteCount - 1;
+  }
+  showClock = EEPROM.read(9);
+  clockBackgroundFade = EEPROM.read(10);
+
+}
 void readSettingsEsp8266Thing() // aka parallel
 {
   // check for "magic number" so we know settings have been written to EEPROM
@@ -1395,7 +1455,9 @@ void readSettingsDefaultProduct()
 }
 
 void readSettings() {
-  #if defined(PRODUCT_ESP8266_THING)
+  #if defined (PRODUCT_1628_RINGS)
+    readSettings1628Rings();
+  #elif defined(PRODUCT_ESP8266_THING)
     readSettingsEsp8266Thing();
   #elif defined(PRODUCT_KRAKEN64)
     readSettingsKraken64();
@@ -1415,7 +1477,22 @@ void readSettings() {
     #error "readSettings() not defined for product?"
   #endif
 }
+void writeAndCommitSettings1628Rings() {
+  EEPROM.write(0, brightness);
+  EEPROM.write(1, currentPatternIndex);
+  EEPROM.write(2, solidColor.r);
+  EEPROM.write(3, solidColor.g);
+  EEPROM.write(4, solidColor.b);
+  EEPROM.write(5, power);
+  EEPROM.write(6, autoplay);
+  EEPROM.write(7, autoplayDuration);
+  EEPROM.write(8, currentPaletteIndex);
+  EEPROM.write(9, showClock);
+  EEPROM.write(10, clockBackgroundFade);
 
+  EEPROM.write(511, 55);
+  EEPROM.commit();
+}
 void writeAndCommitSettingsEsp8266Thing() // aka parallel
 {
   EEPROM.write(0, brightness);
@@ -1571,7 +1648,9 @@ void writeAndCommitSettingsDefaultProduct()
 
 void writeAndCommitSettings()
 {
-  #if defined(PRODUCT_ESP8266_THING)
+  #if defined (PRODUCT_1628_RINGS)
+    writeAndCommitSettings1628Rings();
+  #elif defined(PRODUCT_ESP8266_THING)
     writeAndCommitSettingsEsp8266Thing();
   #elif defined(PRODUCT_KRAKEN64)
     writeAndCommitSettingsKraken64();
@@ -2084,9 +2163,6 @@ void palettetest( CRGB* ledarray, uint16_t numleds, const CRGBPalette16& gCurren
   fill_palette( ledarray, numleds, startindex, (256 / NUM_PIXELS) + 1, gCurrentPalette, 255, LINEARBLEND);
 }
 
-
-// TODO - swirlFibonacci(): Disable if NUM_PIXELS < 128?
-
 #if IS_FIBONACCI // swirlFibonacci() uses physicalToFibonacci and angles
 void swirlFibonacci() {
 
@@ -2118,8 +2194,6 @@ void swirlFibonacci() {
 }
 #endif
 
-// TODO - fireFibonacci(): Disable if NUM_PIXELS < 128?
-
 #if IS_FIBONACCI // fireFibonacci() uses coordsX/coordsY
 // TODO: combine with normal fire effect
 void fireFibonacci() {
@@ -2134,8 +2208,6 @@ void fireFibonacci() {
 }
 #endif
 
-// TODO - waterFibonacci(): Disable if NUM_PIXELS < 128?
-
 #if IS_FIBONACCI // waterFibonacci() uses coordsX/coordsY
 // TODO: combine with normal water effect
 void waterFibonacci() {
@@ -2149,8 +2221,6 @@ void waterFibonacci() {
   }
 }
 #endif
-
-// TODO - emitterFibonacci(): Disable if NUM_PIXELS < 128?
 
 #if IS_FIBONACCI // emitterFibonacci() uses angle, antialiasPixelAR()
 /**
