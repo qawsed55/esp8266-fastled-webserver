@@ -190,9 +190,6 @@ PatternAndNameList patterns = {
     {pridePlayground, "Pride Playground"},
     {colorWavesPlayground, "Color Waves Playground"},
 
-    {bodyPalette, "Kraken Palette"},
-    {bodyGradientPalette, "Kraken Gradient Palette"},
-
     // matrix patterns
     {anglePalette, "Angle Palette"},
     {radiusPalette, "Radius Palette"},
@@ -335,7 +332,7 @@ void setup()
   String macIdString = macID;
   macIdString.toUpperCase();
 
-  nameString = "Kraken64-" + macIdString;
+  nameString = "Chamaeleon64-" + macIdString;
 
   char nameChar[nameString.length() + 1];
   memset(nameChar, 0, nameString.length() + 1);
@@ -1327,7 +1324,7 @@ void radialPaletteShift()
   for (uint16_t i = 0; i < NUM_LEDS; i++)
   {
     // leds[i] = ColorFromPalette( gCurrentPalette, gHue + sin8(i*16), brightness);
-    leds[body[i]] = ColorFromPalette(gCurrentPalette, i + gHue, 255, LINEARBLEND);
+    leds[radii[i]] = ColorFromPalette(gCurrentPalette, i + gHue, 255, LINEARBLEND);
   }
 }
 
@@ -1335,7 +1332,7 @@ void radialPaletteShiftOutward()
 {
   for (uint16_t i = 0; i < NUM_LEDS; i++)
   {
-    leds[body[i]] = ColorFromPalette(gCurrentPalette, i - gHue, 255, LINEARBLEND);
+    leds[radii[i]] = ColorFromPalette(gCurrentPalette, i - gHue, 255, LINEARBLEND);
   }
 }
 
