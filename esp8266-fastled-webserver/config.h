@@ -34,8 +34,8 @@
 // #define PRODUCT_FIBONACCI64_NANO  // 33mm, SK6805-EC15,   ~5mA/pixel
 // #define PRODUCT_FIBONACCI32
 // #define PRODUCT_KRAKEN64
-#define PRODUCT_ESP8266_THING // aka parallel (6-output)
-
+// #define PRODUCT_ESP8266_THING // aka parallel (6-output)
+#define PRODUCT_1628_RINGS
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Additional configuration options ... defaults shown
@@ -145,6 +145,9 @@
     #endif
     #if !defined(HAS_POLAR_COORDS) || ((HAS_POLAR_COORDS != 0) && (HAS_POLAR_COORDS != 1))
         #error "HAS_POLAR_COORDS must be defined to zero or one"
+    #endif
+    #if HAS_POLAR_COORDS && (!HAS_COORDINATE_MAP)
+        #error "HAS_POLAR_COORDS is true, so HAS_COORDINATE_MAP must also be true (but is not)"
     #endif
     #if !defined(PARALLEL_OUTPUT_CHANNELS)
         #error "PARALLEL_OUTPUT_CHANNELS must be defined"
