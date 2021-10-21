@@ -24,7 +24,7 @@
 // When compiling from Arduino, you can edit this file.
 // When compiling from PlatformIO, this is a reference for compiler flags.
 
-// #define PRODUCT_DEFAULT
+#define PRODUCT_DEFAULT
 // #define PRODUCT_FIBONACCI512
 // #define PRODUCT_FIBONACCI256
 // #define PRODUCT_FIBONACCI128
@@ -35,7 +35,7 @@
 // #define PRODUCT_FIBONACCI32
 // #define PRODUCT_KRAKEN64
 // #define PRODUCT_ESP8266_THING // aka parallel (6-output)
-#define PRODUCT_1628_RINGS
+// #define PRODUCT_1628_RINGS
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Additional configuration options ... defaults shown

@@ -2274,6 +2274,7 @@ void wheel() {
 
 
 #if (PARALLEL_OUTPUT_CHANNELS > 1)
+
 void multi_test() {
   static bool debug = true;
   const uint8_t step = (256 / PARALLEL_OUTPUT_CHANNELS);
@@ -2290,22 +2291,38 @@ void multi_test() {
     if (strip == 0) {
       pixelOffset = LedOffset<1>(); // uses one-based indices... sigh.
       pixelCount  = LedCount<1>();  // uses one-based indices... sigh.
-    } else if (strip == 1) {
+    }
+#if (PARALLEL_OUTPUT_CHANNELS >= 2)
+    else if (strip == 1) {
       pixelOffset = LedOffset<2>(); // uses one-based indices... sigh.
       pixelCount  = LedCount<2>();  // uses one-based indices... sigh.
-    } else if (strip == 2) {
+    }
+#endif    
+#if (PARALLEL_OUTPUT_CHANNELS >= 3)
+    else if (strip == 2) {
       pixelOffset = LedOffset<3>(); // uses one-based indices... sigh.
       pixelCount  = LedCount<3>();  // uses one-based indices... sigh.
-    } else if (strip == 3) {
+    }
+#endif
+#if (PARALLEL_OUTPUT_CHANNELS >= 4)
+    else if (strip == 3) {
       pixelOffset = LedOffset<4>(); // uses one-based indices... sigh.
       pixelCount  = LedCount<4>();  // uses one-based indices... sigh.
-    } else if (strip == 4) {
+    }
+#endif
+#if (PARALLEL_OUTPUT_CHANNELS > 5)
+    else if (strip == 4) {
       pixelOffset = LedOffset<5>(); // uses one-based indices... sigh.
       pixelCount  = LedCount<5>();  // uses one-based indices... sigh.
-    } else if (strip == 5) {
+    }
+#endif
+#if (PARALLEL_OUTPUT_CHANNELS > 6)
+    else if (strip == 5) {
       pixelOffset = LedOffset<6>(); // uses one-based indices... sigh.
       pixelCount  = LedCount<6>();  // uses one-based indices... sigh. 
-    } else {
+    }
+#endif
+    else {
       break;
     }
 
@@ -2331,3 +2348,4 @@ void multi_test() {
   debug = false;
 }
 #endif
+

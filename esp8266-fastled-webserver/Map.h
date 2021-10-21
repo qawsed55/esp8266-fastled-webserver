@@ -93,6 +93,9 @@
   const uint8_t  coordsX[NUM_PIXELS]             { 152, 224, 252, 210, 211, 184, 169, 161, 89, 121, 138, 102, 61, 19, 13, 57, 82, 29, 0, 36, 63, 111, 79, 83, 158, 129, 118, 160, 196, 255, 212, 163, 203, 250 };
   const uint8_t  coordsY[NUM_PIXELS]             { 120, 101, 69, 7, 48, 90, 50, 7, 0, 27, 83, 62, 37, 35, 84, 78, 112, 125, 154, 185, 149, 140, 195, 236, 255, 226, 179, 198, 223, 181, 183, 156, 144, 135 };
   const uint8_t  angles[NUM_PIXELS]              { 255, 246, 237, 214, 223, 232, 208, 199, 176, 185, 193, 170, 161, 152, 138, 147, 132, 123, 114, 100, 108, 94, 85, 76, 53, 62, 70, 47, 38, 15, 23, 32, 9, 0 };
+  static const auto (&radiusProxy)[NUM_PIXELS] = physicalToFibonacci;
+  static const uint8_t RADII_SCALE_DIVISOR    { 1 };
+  static const uint8_t RADII_SCALE_MULTIPLIER { 8 };
 #elif defined(PRODUCT_KRAKEN64)
   const uint8_t  coordsX[NUM_PIXELS]             { 151, 188, 199, 199, 171, 147, 131, 119, 124, 179, 200, 217, 237, 249, 242, 234, 255, 148, 175, 177, 150, 143, 171, 153, 155, 106, 110, 102, 75, 86, 106, 108, 88, 90, 84, 78, 107, 98, 121, 128, 80, 69, 134, 159, 192, 202, 195, 218, 61, 32, 18, 26, 39, 20, 3, 0, 48, 52, 61, 54, 33, 20, 7, 8 };
   const uint8_t  coordsY[NUM_PIXELS]             { 190, 204, 225, 252, 255, 236, 216, 191, 166, 147, 154, 170, 173, 156, 131, 107, 106, 148, 121, 86, 81, 63, 56, 36, 17, 145, 120, 96, 55, 23, 18, 0, 2, 112, 77, 31, 35, 49, 51, 30, 124, 103, 101, 98, 80, 58, 40, 69, 134, 124, 107, 81, 56, 43, 50, 70, 156, 180, 202, 219, 213, 195, 197, 215 };
@@ -330,7 +333,7 @@ void radiusPalette() {
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
 
     unsigned tmp = ((unsigned)(radiusProxy[i] * RADII_SCALE_MULTIPLIER)) / RADII_SCALE_DIVISOR;
-#if ((NUM_PIXELS & (NUM_PIXELS-1) == 0) // Power-of-two, so no need to check
+#if ((NUM_PIXELS & (NUM_PIXELS-1)) == 0) // Power-of-two, so no need to check
     uint8_t r = tmp;
 #else
     uint8_t r = tmp > 255 ? 255 : tmp;
@@ -394,8 +397,8 @@ void radiusGradientPalette() {
   uint16_t hues = 1;
 
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    unsigned r = ((unsigned)(radiusProxy[i] * RADII_SCALE_MULTIPLIER)) / RADII_SCALE_DIVISOR;
-#if ((NUM_PIXELS & (NUM_PIXELS-1) == 0) // Power-of-two, so no need to check
+    unsigned tmp = ((unsigned)(radiusProxy[i] * RADII_SCALE_MULTIPLIER)) / RADII_SCALE_DIVISOR;
+#if ((NUM_PIXELS & (NUM_PIXELS-1)) == 0) // Power-of-two, so no need to check
     uint8_t r = tmp;
 #else
     uint8_t r = tmp > 255 ? 255 : tmp;
@@ -446,10 +449,14 @@ void xyGradientPalette() {
 #if IS_FIBONACCI // drawAnalogClock() calls antialiasPixelAR(), which requires physicalToFibonacci[]
 void drawAnalogClock() {
 
-  static_assert(NUM_PIXELS >= 32, "Update to drawAnalogClock() required to support fewer pixels");
-  const uint8_t hourRadius   = NUM_PIXELS / 8 * 3; //  96 designed for 256 pixels ==> 3/8
-  const uint8_t minuteRadius = NUM_PIXELS / 4 * 3; // 192 designed for 256 pixels ==> 3/4
-  const uint8_t secondRadius = NUM_PIXELS - 1;     // 255 designed for 256 pixels ==> all pixels
+  // TODO: Update to use radiusProxy?  For now, just divide 512+ by RADII_SCALE_DIVISOR
+
+  static_assert((NUM_PIXELS / RADII_SCALE_DIVISOR) <= 256, "");
+  static_assert((NUM_PIXELS / RADII_SCALE_DIVISOR) >=  32, "Update to drawAnalogClock() required to support fewer pixels");
+
+  const uint8_t hourRadius   = (uint8_t)(NUM_PIXELS / RADII_SCALE_DIVISOR / 8u * 3u); //  96 designed for 256 pixels ==> 3/8
+  const uint8_t minuteRadius = (uint8_t)(NUM_PIXELS / RADII_SCALE_DIVISOR / 4u * 3u); // 192 designed for 256 pixels ==> 3/4
+  const uint8_t secondRadius = (uint8_t)(NUM_PIXELS / RADII_SCALE_DIVISOR - 1);       // 255 designed for 256 pixels ==> all pixels
 
   const uint8_t hourHandWidth   = 8; // angle @ unit256 ~= 11.25000 degrees
   const uint8_t minuteHandWidth = 7; // angle @ unit256 ~=  9.84375 degrees
@@ -473,8 +480,8 @@ void drawAnalogClock() {
     secondAngle = 256u - second * degreesPerSecond;
   }
 
+  // although can update angles once every 100ms, have to perform fade & overlay with each cycle
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-
   antialiasPixelAR(secondAngle, secondHandWidth, 0, secondRadius, CRGB::Blue );
   antialiasPixelAR(minuteAngle, minuteHandWidth, 0, minuteRadius, CRGB::Green);
   antialiasPixelAR(hourAngle,   hourHandWidth,   0, hourRadius,   CRGB::Red  );
