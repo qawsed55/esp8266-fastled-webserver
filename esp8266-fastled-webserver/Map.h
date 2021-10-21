@@ -328,7 +328,13 @@ void radiusPalette() {
   uint16_t hues = 1;
 
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    uint8_t r = ((unsigned)(radiusProxy[i] * RADII_SCALE_MULTIPLIER)) / RADII_SCALE_DIVISOR;
+
+    unsigned tmp = ((unsigned)(radiusProxy[i] * RADII_SCALE_MULTIPLIER)) / RADII_SCALE_DIVISOR;
+#if ((NUM_PIXELS & (NUM_PIXELS-1) == 0) // Power-of-two, so no need to check
+    uint8_t r = tmp;
+#else
+    uint8_t r = tmp > 255 ? 255 : tmp;
+#endif
     leds[i] = ColorFromPalette(palettes[currentPaletteIndex], beat8(speed) - (r * hues));
   }
 }
@@ -388,7 +394,13 @@ void radiusGradientPalette() {
   uint16_t hues = 1;
 
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    uint8_t r = ((unsigned)(radiusProxy[i] * RADII_SCALE_MULTIPLIER)) / RADII_SCALE_DIVISOR;
+    unsigned r = ((unsigned)(radiusProxy[i] * RADII_SCALE_MULTIPLIER)) / RADII_SCALE_DIVISOR;
+#if ((NUM_PIXELS & (NUM_PIXELS-1) == 0) // Power-of-two, so no need to check
+    uint8_t r = tmp;
+#else
+    uint8_t r = tmp > 255 ? 255 : tmp;
+#endif
+
     leds[i] = ColorFromPalette(gCurrentPalette, beat8(speed) - (r * hues));
   }
 }
