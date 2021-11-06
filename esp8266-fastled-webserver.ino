@@ -112,7 +112,7 @@ CRGBPalette16 gTargetPalette(gGradientPalettes[0]);
 
 CRGBPalette16 IceColors_p = CRGBPalette16(CRGB::Black, CRGB::Blue, CRGB::Aqua, CRGB::White);
 
-uint8_t currentPatternIndex = 0; // Index number of which pattern is current
+uint8_t currentPatternIndex = 1; // Index number of which pattern is current
 uint8_t autoplay = 0;
 
 uint8_t autoplayDuration = 10;

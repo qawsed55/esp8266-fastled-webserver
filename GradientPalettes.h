@@ -477,8 +477,8 @@ DEFINE_GRADIENT_PALETTE( Blue_Cyan_Yellow_gp ) {
 // This list of color palettes acts as a "playlist"; you can
 // add or delete, or re-arrange as you wish.
 const TProgmemRGBGradientPalettePtr gGradientPalettes[] = {
-  Sunset_Real_gp,
   es_rivendell_15_gp,
+  Sunset_Real_gp,
   es_ocean_breeze_036_gp,
   rgi_15_gp,
   retro2_16_gp,
@@ -515,4 +515,3 @@ const TProgmemRGBGradientPalettePtr gGradientPalettes[] = {
 // Count of how many cpt-city gradients are defined:
 const uint8_t gGradientPaletteCount =
   sizeof( gGradientPalettes) / sizeof( TProgmemRGBGradientPalettePtr );
-
