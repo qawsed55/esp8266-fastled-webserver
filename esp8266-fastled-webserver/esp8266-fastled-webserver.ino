@@ -18,14 +18,6 @@
 
 #include "common.h"
 
-
-
-#if defined(ENABLE_IR)
-  IRrecv irReceiver(RECV_PIN);
-#endif
-
-
-
 WiFiManager wifiManager;
 ESP8266WebServer webServer(80);
 //WebSocketsServer webSocketsServer = WebSocketsServer(81);
@@ -37,13 +29,10 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", UTC_OFFSET_IN_SECONDS, NTP_UPDATE_T
 
 String nameString;
 
-
-
-
 CRGB leds[NUM_PIXELS];
 
 const uint8_t brightnessCount = 5;
-uint8_t brightnessMap[brightnessCount] = { 16, 32, 64, 128, 255 };
+const uint8_t brightnessMap[brightnessCount] = { 16, 32, 64, 128, 255 };
 uint8_t brightnessIndex = DEFAULT_BRIGHTNESS_INDEX;
 
 // ten seconds per color palette makes a good demo
@@ -90,26 +79,31 @@ CRGB solidColor = CRGB::Blue;
 // scale the brightness of all pixels down
 void dimAll(byte value)
 {
-  // TODO: use auto and C++11 style indexing
-  for (int i = 0; i < NUM_PIXELS; i++) {
-    leds[i].nscale8(value);
+  for (auto led : leds) {
+    led.nscale8(value);
   }
 }
 
-
-// These are actually C++ source files, not header files....
-#include "Twinkles.h"
-#include "TwinkleFOX.h"
-
-#include "Map.h"
-#include "Noise.h"
-#include "Pacifica.h"
-#include "PridePlayground.h"
-#include "ColorWavesPlayground.h"
-
 // List of patterns to cycle through.  Each is defined as a separate function below.
 
-PatternAndNameList patterns = {
+// NOTE: HAS_POLAR_COORDS implies HAS_COORDINATE_MAP
+//       IS_FIBONACCI implies HAS_COORDINATE_MAP
+
+// TODO: Consider patterns listing name and all variants:
+//       [] original variant
+//       [] fibonacci variant (or nullptr)
+//       [] concentric ring variant (or nullptr)
+//       [] coordinates variant (or nullptr)
+// WHY #1: Easier to manage defining the patterns via a macro,
+//         which discards arguments that do not apply for a given
+//         board, than this #if/#endif spaghetti mess.
+// WHY #2: Easier for users to see correlations between the patterns,
+//         when switching between them.
+// WHY #3: May eventually be able to change mapping for standard
+//         effects (emulating led array, but using custom mapping),
+//         which could further reduce code duplication.
+
+const PatternAndName patterns[] = {
   { pride,          "Pride" },
 #if IS_FIBONACCI
   { prideFibonacci, "Pride Fibonacci" },
@@ -117,23 +111,24 @@ PatternAndNameList patterns = {
 
   { colorWaves,             "Color Waves" },
 
-#if HAS_POLAR_COORDS // really a wrong name... and likely doing way more computation than necessary
+#if HAS_COORDINATE_MAP // really a wrong name... and likely doing way more computation than necessary
   { radarSweepPalette, "Radar Sweep Palette" },
-  // noise patterns (XY and Polar variations)
-  { gradientPalettePolarNoise, "Gradient Palette Polar Noise" },
-  { palettePolarNoise, "Palette Polar Noise" },
-  { firePolarNoise, "Fire Polar Noise" },
-  { firePolarNoise2, "Fire Polar Noise 2" },
-  { lavaPolarNoise, "Lava Polar Noise" },
-  { rainbowPolarNoise, "Rainbow Polar Noise" },
-  { rainbowStripeNoise, "Rainbow Stripe Noise" },
-  { rainbowStripePolarNoise, "Rainbow Stripe Polar Noise" },
-  { partyPolarNoise, "Party Polar Noise" },
-  { forestPolarNoise, "Forest Polar Noise" },
-  { cloudPolarNoise, "Cloud Polar Noise" },
-  { oceanPolarNoise, "Ocean Polar Noise" },
-  { blackAndWhitePolarNoise, "Black & White Polar Noise" },
-  { blackAndBluePolarNoise, "Black & Blue Polar Noise" },
+#endif
+#if HAS_POLAR_COORDS // really a wrong name... and likely doing way more computation than necessary
+  // noise patterns (Polar variations)
+  { gradientPalettePolarNoise,         "Gradient Palette Polar Noise" },
+  { palettePolarNoise,                 "Palette Polar Noise" },
+  { firePolarNoise,                    "Fire Polar Noise" },
+  { firePolarNoise2,                   "Fire Polar Noise 2" },
+  { lavaPolarNoise,                    "Lava Polar Noise" },
+  { rainbowPolarNoise,                 "Rainbow Polar Noise" },
+  { rainbowStripePolarNoise,           "Rainbow Stripe Polar Noise" },
+  { partyPolarNoise,                   "Party Polar Noise" },
+  { forestPolarNoise,                  "Forest Polar Noise" },
+  { cloudPolarNoise,                   "Cloud Polar Noise" },
+  { oceanPolarNoise,                   "Ocean Polar Noise" },
+  { blackAndWhitePolarNoise,           "Black & White Polar Noise" },
+  { blackAndBluePolarNoise,            "Black & Blue Polar Noise" },
 #endif
 
 #if IS_FIBONACCI
@@ -161,7 +156,7 @@ PatternAndNameList patterns = {
   { pacifica_fibonacci_loop,           "Pacifica Fibonacci" },
 #endif
 
-#if IS_FIBONACCI || HAS_COORDINATE_MAP
+#if HAS_COORDINATE_MAP
   // matrix patterns
   { anglePalette,                      "Angle Palette" },
   { radiusPalette,                     "Radius Palette" },
@@ -248,7 +243,7 @@ PatternAndNameList patterns = {
 
   { strandTest,             "Strand Test" },
 
-  { showSolidColor,         "Solid Color" }
+  { showSolidColor,         "Solid Color" } // This *must* be the last pattern
 };
 
 const uint8_t patternCount = ARRAY_SIZE2(patterns);
@@ -277,67 +272,11 @@ const String paletteNames[paletteCount] = {
     "Heat",
 };
 
-#include "Fields.h"
-
 // TODO / BUGBUG -- should this be ESP8266-specific?  Is this only for when IR enabled ???
 // FIB128 did not have this...
 #if defined(PRODUCT_FIBONACCI256)
   ADC_MODE(ADC_VCC);
 #endif
-
-// Ugly macro-like constexpr, used for FastLED template arguments
-template <size_t ONE_BASED_OUTPUT_CHANNEL>
-constexpr int LedOffset() {
-  static_assert(ONE_BASED_OUTPUT_CHANNEL <= PARALLEL_OUTPUT_CHANNELS, "");
-  static_assert(ONE_BASED_OUTPUT_CHANNEL >= 1, "");
-  return 0 // this would be much simpler with C++14
-  #if PARALLEL_OUTPUT_CHANNELS >= 2
-    + ((ONE_BASED_OUTPUT_CHANNEL >= 2) ? PIXELS_ON_DATA_PIN_1 : 0)
-  #endif
-  #if PARALLEL_OUTPUT_CHANNELS >= 3
-    + ((ONE_BASED_OUTPUT_CHANNEL >= 3) ? PIXELS_ON_DATA_PIN_2 : 0)
-  #endif
-  #if PARALLEL_OUTPUT_CHANNELS >= 4
-    + ((ONE_BASED_OUTPUT_CHANNEL >= 4) ? PIXELS_ON_DATA_PIN_3 : 0)
-  #endif
-  #if PARALLEL_OUTPUT_CHANNELS >= 5
-    + ((ONE_BASED_OUTPUT_CHANNEL >= 5) ? PIXELS_ON_DATA_PIN_4 : 0)
-  #endif
-  #if PARALLEL_OUTPUT_CHANNELS >= 6
-    + ((ONE_BASED_OUTPUT_CHANNEL >= 6) ? PIXELS_ON_DATA_PIN_5 : 0)
-  #endif
-  ;
-}
-template <size_t ONE_BASED_OUTPUT_CHANNEL>
-constexpr int LedCount() {
-  static_assert(ONE_BASED_OUTPUT_CHANNEL <= PARALLEL_OUTPUT_CHANNELS, "");
-  static_assert(ONE_BASED_OUTPUT_CHANNEL >= 1, "");
-  #if PARALLEL_OUTPUT_CHANNELS == 1
-    return NUM_PIXELS;
-  #else
-    return // this would be much simpler with C++14
-    #if PARALLEL_OUTPUT_CHANNELS >= 6
-      (ONE_BASED_OUTPUT_CHANNEL == 6) ? PIXELS_ON_DATA_PIN_6 :
-    #endif
-    #if PARALLEL_OUTPUT_CHANNELS >= 5
-      (ONE_BASED_OUTPUT_CHANNEL == 5) ? PIXELS_ON_DATA_PIN_5 :
-    #endif
-    #if PARALLEL_OUTPUT_CHANNELS >= 4
-      (ONE_BASED_OUTPUT_CHANNEL == 4) ? PIXELS_ON_DATA_PIN_4 :
-    #endif
-    #if PARALLEL_OUTPUT_CHANNELS >= 3
-      (ONE_BASED_OUTPUT_CHANNEL == 3) ? PIXELS_ON_DATA_PIN_3 :
-    #endif
-    #if PARALLEL_OUTPUT_CHANNELS >= 2
-      (ONE_BASED_OUTPUT_CHANNEL == 2) ? PIXELS_ON_DATA_PIN_2 :
-    #endif
-    #if PARALLEL_OUTPUT_CHANNELS >= 1
-      (ONE_BASED_OUTPUT_CHANNEL == 1) ? PIXELS_ON_DATA_PIN_1 :
-    #endif
-      0;
-  #endif
-}
-
 
 void setup() {
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP    
@@ -378,7 +317,7 @@ void setup() {
   fill_solid(leds, NUM_PIXELS, CRGB::Black);
   FastLED.show();
 
-  EEPROM.begin(512);
+  EEPROM.begin(512); // TODO: move settings (currently EEPROM) to fields.hpp/.cpp
   readSettings();
 
   FastLED.setBrightness(brightness);
@@ -485,7 +424,7 @@ void setup() {
   httpUpdateServer.setup(&webServer);
 
   webServer.on("/all", HTTP_GET, []() {
-    String json = getFieldsJson(fields, fieldCount);
+    String json = getFieldsJson();
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     webServer.send(200, "application/json", json);
   });
@@ -504,7 +443,7 @@ void setup() {
 
   webServer.on("/fieldValue", HTTP_GET, []() {
     String name = webServer.arg("name");
-    String value = getFieldValue(name, fields, fieldCount);
+    String value = getFieldValue(name);
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     webServer.send(200, "text/json", value);
   });
@@ -512,7 +451,7 @@ void setup() {
   webServer.on("/fieldValue", HTTP_POST, []() {
     String name = webServer.arg("name");
     String value = webServer.arg("value");
-    String newValue = setFieldValue(name, value, fields, fieldCount);
+    String newValue = setFieldValue(name, value);
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     webServer.send(200, "text/json", newValue);
   });
@@ -730,9 +669,14 @@ void broadcastString(String name, String value)
 }
 
 // TODO: Add board-specific entropy sources
-
+// e.g., using `uint32_t esp_random()`, if exposed in Arduino ESP32 / ESP8266 BSPs
+// e.g., directly reading from 0x3FF20E44 on ESP8266 (dangerous! no entropy validation, whitening)
+// e.g., directly reading from 0x3FF75144 on ESP32   (dangerous! no entropy validation, whitening)
+// e.g., directly reading from RANDOM_REG32          (dangerous! no entropy validation, whitening)
+// e.g., using a library, such as https://github.com/marvinroger/ESP8266TrueRandom/blob/master/ESP8266TrueRandom.cpp (less dangerous?)
+// e.g., directly reading REG_READ(WDEV_RND_REG)     (dangerous! no check for sufficient clock cycles passed for entropy)
 void loop() {
-  // Add entropy to random number generator; we use a lot of it.
+  // Modify random number generator seed; we use a lot of it.  (Note: this is still deterministic)
   random16_add_entropy(random(65535));
 
   //  webSocketsServer.loop();
@@ -765,8 +709,7 @@ void loop() {
   }
 
   checkPingTimer();
-
-  //  handleIrInput();
+  handleIrInput();  // empty function when ENABLE_IR is not defined
 
   if (power == 0) {
     fill_solid(leds, NUM_PIXELS, CRGB::Black);
@@ -843,431 +786,15 @@ void loop() {
 //  }
 //}
 
-//void handleIrInput()
-//{
-//  InputCommand command = readCommand();
-//
-//  if (command != InputCommand::None) {
-//    Serial.print("command: ");
-//    Serial.println((int) command);
-//  }
-//
-//  switch (command) {
-//    case InputCommand::Up: {
-//        adjustPattern(true);
-//        break;
-//      }
-//    case InputCommand::Down: {
-//        adjustPattern(false);
-//        break;
-//      }
-//    case InputCommand::Power: {
-//        setPower(power == 0 ? 1 : 0);
-//        break;
-//      }
-//    case InputCommand::BrightnessUp: {
-//        adjustBrightness(true);
-//        break;
-//      }
-//    case InputCommand::BrightnessDown: {
-//        adjustBrightness(false);
-//        break;
-//      }
-//    case InputCommand::PlayMode: { // toggle pause/play
-//        setAutoplay(!autoplay);
-//        break;
-//      }
-//
-//    // pattern buttons
-//
-//    case InputCommand::Pattern1: {
-//        setPattern(0);
-//        break;
-//      }
-//    case InputCommand::Pattern2: {
-//        setPattern(1);
-//        break;
-//      }
-//    case InputCommand::Pattern3: {
-//        setPattern(2);
-//        break;
-//      }
-//    case InputCommand::Pattern4: {
-//        setPattern(3);
-//        break;
-//      }
-//    case InputCommand::Pattern5: {
-//        setPattern(4);
-//        break;
-//      }
-//    case InputCommand::Pattern6: {
-//        setPattern(5);
-//        break;
-//      }
-//    case InputCommand::Pattern7: {
-//        setPattern(6);
-//        break;
-//      }
-//    case InputCommand::Pattern8: {
-//        setPattern(7);
-//        break;
-//      }
-//    case InputCommand::Pattern9: {
-//        setPattern(8);
-//        break;
-//      }
-//    case InputCommand::Pattern10: {
-//        setPattern(9);
-//        break;
-//      }
-//    case InputCommand::Pattern11: {
-//        setPattern(10);
-//        break;
-//      }
-//    case InputCommand::Pattern12: {
-//        setPattern(11);
-//        break;
-//      }
-//
-//    // custom color adjustment buttons
-//
-//    case InputCommand::RedUp: {
-//        solidColor.red += 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::RedDown: {
-//        solidColor.red -= 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::GreenUp: {
-//        solidColor.green += 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::GreenDown: {
-//        solidColor.green -= 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::BlueUp: {
-//        solidColor.blue += 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::BlueDown: {
-//        solidColor.blue -= 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//
-//    // color buttons
-//
-//    case InputCommand::Red: {
-//        setSolidColor(CRGB::Red);
-//        break;
-//      }
-//    case InputCommand::RedOrange: {
-//        setSolidColor(CRGB::OrangeRed);
-//        break;
-//      }
-//    case InputCommand::Orange: {
-//        setSolidColor(CRGB::Orange);
-//        break;
-//      }
-//    case InputCommand::YellowOrange: {
-//        setSolidColor(CRGB::Goldenrod);
-//        break;
-//      }
-//    case InputCommand::Yellow: {
-//        setSolidColor(CRGB::Yellow);
-//        break;
-//      }
-//
-//    case InputCommand::Green: {
-//        setSolidColor(CRGB::Green);
-//        break;
-//      }
-//    case InputCommand::Lime: {
-//        setSolidColor(CRGB::Lime);
-//        break;
-//      }
-//    case InputCommand::Aqua: {
-//        setSolidColor(CRGB::Aqua);
-//        break;
-//      }
-//    case InputCommand::Teal: {
-//        setSolidColor(CRGB::Teal);
-//        break;
-//      }
-//    case InputCommand::Navy: {
-//        setSolidColor(CRGB::Navy);
-//        break;
-//      }
-//
-//    case InputCommand::Blue: {
-//        setSolidColor(CRGB::Blue);
-//        break;
-//      }
-//    case InputCommand::RoyalBlue: {
-//        setSolidColor(CRGB::RoyalBlue);
-//        break;
-//      }
-//    case InputCommand::Purple: {
-//        setSolidColor(CRGB::Purple);
-//        break;
-//      }
-//    case InputCommand::Indigo: {
-//        setSolidColor(CRGB::Indigo);
-//        break;
-//      }
-//    case InputCommand::Magenta: {
-//        setSolidColor(CRGB::Magenta);
-//        break;
-//      }
-//
-//    case InputCommand::White: {
-//        setSolidColor(CRGB::White);
-//        break;
-//      }
-//    case InputCommand::Pink: {
-//        setSolidColor(CRGB::Pink);
-//        break;
-//      }
-//    case InputCommand::LightPink: {
-//        setSolidColor(CRGB::LightPink);
-//        break;
-//      }
-//    case InputCommand::BabyBlue: {
-//        setSolidColor(CRGB::CornflowerBlue);
-//        break;
-//      }
-//    case InputCommand::LightBlue: {
-//        setSolidColor(CRGB::LightBlue);
-//        break;
-//      }
-//  }
-//}
-
-
 // TODO: Save settings in file system, not EEPROM!
 
-// TODO: Combine settings for all builds into a single structure.
-
-// TODO: Update magic number from 0x55 to 0xAA (or 0x96 or 0x69)
-
-void readSettings1628Rings()
+const uint8_t SETTINGS_MAGIC_BYTE = 0x96;
+void readSettings()
 {
   // check for "magic number" so we know settings have been written to EEPROM
   // and it's not just full of random bytes
 
-  if (EEPROM.read(511) != 55) {
-    return;
-  }
-
-  brightness = EEPROM.read(0);
-
-  currentPatternIndex = EEPROM.read(1);
-  if (currentPatternIndex >= patternCount) {
-    currentPatternIndex = patternCount - 1;
-  }
-
-  byte r = EEPROM.read(2);
-  byte g = EEPROM.read(3);
-  byte b = EEPROM.read(4);
-
-  if (r == 0 && g == 0 && b == 0)
-  {
-  }
-  else
-  {
-    solidColor = CRGB(r, g, b);
-  }
-
-  power = EEPROM.read(5);
-
-  autoplay = EEPROM.read(6);
-  autoplayDuration = EEPROM.read(7);
-
-  currentPaletteIndex = EEPROM.read(8);
-  if (currentPaletteIndex >= paletteCount) {
-    currentPaletteIndex = paletteCount - 1;
-  }
-  showClock = EEPROM.read(9);
-  clockBackgroundFade = EEPROM.read(10);
-
-}
-void readSettingsEsp8266Thing() // aka parallel
-{
-  // check for "magic number" so we know settings have been written to EEPROM
-  // and it's not just full of random bytes
-
-  if (EEPROM.read(511) != 55) {
-    return;
-  }
-
-  brightness = EEPROM.read(0);
-
-  currentPatternIndex = EEPROM.read(1);
-  if (currentPatternIndex >= patternCount) {
-    currentPatternIndex = patternCount - 1;
-  }
-
-  byte r = EEPROM.read(2);
-  byte g = EEPROM.read(3);
-  byte b = EEPROM.read(4);
-
-  if (r == 0 && g == 0 && b == 0)
-  {
-  }
-  else
-  {
-    solidColor = CRGB(r, g, b);
-  }
-
-  power = EEPROM.read(5);
-
-  autoplay = EEPROM.read(6);
-  autoplayDuration = EEPROM.read(7);
-
-  currentPaletteIndex = EEPROM.read(8);
-  if (currentPaletteIndex >= paletteCount) {
-    currentPaletteIndex = paletteCount - 1;
-  }
-}
-void readSettingsKraken64()
-{
-  // check for "magic number" so we know settings have been written to EEPROM
-  // and it's not just full of random bytes
-
-  if (EEPROM.read(511) != 55) {
-    return;
-  }
-
-  brightness = EEPROM.read(0);
-
-  currentPatternIndex = EEPROM.read(1);
-  if (currentPatternIndex >= patternCount) {
-    currentPatternIndex = patternCount - 1;
-  }
-
-  byte r = EEPROM.read(2);
-  byte g = EEPROM.read(3);
-  byte b = EEPROM.read(4);
-
-  if (r == 0 && g == 0 && b == 0)
-  {
-  }
-  else
-  {
-    solidColor = CRGB(r, g, b);
-  }
-
-  power = EEPROM.read(5);
-
-  autoplay = EEPROM.read(6);
-  autoplayDuration = EEPROM.read(7);
-
-  currentPaletteIndex = EEPROM.read(8);
-  if (currentPaletteIndex >= paletteCount) {
-    currentPaletteIndex = paletteCount - 1;
-  }
-
-  twinkleSpeed = EEPROM.read(9);
-  twinkleDensity = EEPROM.read(10);
-
-  cooling = EEPROM.read(11);
-  sparking = EEPROM.read(12);
-}
-void readSettingsFib32()
-{
-  // check for "magic number" so we know settings have been written to EEPROM
-  // and it's not just full of random bytes
-
-  if (EEPROM.read(511) != 55) {
-    return;
-  }
-
-  brightness = EEPROM.read(0);
-
-  currentPatternIndex = EEPROM.read(1);
-  if (currentPatternIndex >= patternCount) {
-    currentPatternIndex = patternCount - 1;
-  }
-
-  byte r = EEPROM.read(2);
-  byte g = EEPROM.read(3);
-  byte b = EEPROM.read(4);
-
-  if (r == 0 && g == 0 && b == 0)
-  {
-  }
-  else
-  {
-    solidColor = CRGB(r, g, b);
-  }
-
-  power = EEPROM.read(5);
-
-  autoplay = EEPROM.read(6);
-  autoplayDuration = EEPROM.read(7);
-
-  currentPaletteIndex = EEPROM.read(8);
-  if (currentPaletteIndex >= paletteCount) {
-    currentPaletteIndex = paletteCount - 1;
-  }
-
-  showClock = EEPROM.read(9);
-  clockBackgroundFade = EEPROM.read(10);
-}
-void readSettingsFib64()
-{
-  // check for "magic number" so we know settings have been written to EEPROM
-  // and it's not just full of random bytes
-
-  if (EEPROM.read(511) != 55) {
-    return;
-  }
-
-  brightness = EEPROM.read(0);
-
-  currentPatternIndex = EEPROM.read(1);
-  if (currentPatternIndex >= patternCount) {
-    currentPatternIndex = patternCount - 1;
-  }
-
-  byte r = EEPROM.read(2);
-  byte g = EEPROM.read(3);
-  byte b = EEPROM.read(4);
-
-  if (r == 0 && g == 0 && b == 0)
-  {
-  }
-  else
-  {
-    solidColor = CRGB(r, g, b);
-  }
-
-  power = EEPROM.read(5);
-
-  autoplay = EEPROM.read(6);
-  autoplayDuration = EEPROM.read(7);
-
-  currentPaletteIndex = EEPROM.read(8);
-  if (currentPaletteIndex >= paletteCount) {
-    currentPaletteIndex = paletteCount - 1;
-  }
-
-  showClock = EEPROM.read(9);
-  clockBackgroundFade = EEPROM.read(10);
-}
-void readSettingsFib128()
-{
-  // check for "magic number" so we know settings have been written to EEPROM
-  // and it's not just full of random bytes
-
-  if (EEPROM.read(511) != 55) {
+  if (EEPROM.read(511) != SETTINGS_MAGIC_BYTE) {
     return;
   }
 
@@ -1311,265 +838,7 @@ void readSettingsFib128()
   showClock = EEPROM.read(14);
   clockBackgroundFade = EEPROM.read(15);
 }
-void readSettingsFib256()
-{
-  // check for "magic number" so we know settings have been written to EEPROM
-  // and it's not just full of random bytes
-
-  if (EEPROM.read(511) != 55) {
-    return;
-  }
-
-  brightness = EEPROM.read(0);
-
-  currentPatternIndex = EEPROM.read(1);
-  if (currentPatternIndex >= patternCount) {
-    currentPatternIndex = patternCount - 1;
-  }
-
-  byte r = EEPROM.read(2);
-  byte g = EEPROM.read(3);
-  byte b = EEPROM.read(4);
-
-  if (r == 0 && g == 0 && b == 0)
-  {
-  }
-  else
-  {
-    solidColor = CRGB(r, g, b);
-  }
-
-  power = EEPROM.read(5);
-
-  autoplay = EEPROM.read(6);
-  autoplayDuration = EEPROM.read(7);
-
-  currentPaletteIndex = EEPROM.read(8);
-  if (currentPaletteIndex >= paletteCount) {
-    currentPaletteIndex = paletteCount - 1;
-  }
-  showClock = EEPROM.read(9);
-  clockBackgroundFade = EEPROM.read(10);
-
-  // twinkleSpeed = EEPROM.read(9);
-  // twinkleDensity = EEPROM.read(10);
-
-  // cooling = EEPROM.read(11);
-  // sparking = EEPROM.read(12);
-
-  // coolLikeIncandescent = EEPROM.read(13);
-}
-void readSettingsFib512()
-{
-  // check for "magic number" so we know settings have been written to EEPROM
-  // and it's not just full of random bytes
-
-  if (EEPROM.read(511) != 55) {
-    return;
-  }
-
-  brightness = EEPROM.read(0);
-
-  currentPatternIndex = EEPROM.read(1);
-  if (currentPatternIndex >= patternCount) {
-    currentPatternIndex = patternCount - 1;
-  }
-
-  byte r = EEPROM.read(2);
-  byte g = EEPROM.read(3);
-  byte b = EEPROM.read(4);
-
-  if (r == 0 && g == 0 && b == 0)
-  {
-  }
-  else
-  {
-    solidColor = CRGB(r, g, b);
-  }
-
-  power = EEPROM.read(5);
-
-  autoplay = EEPROM.read(6);
-  autoplayDuration = EEPROM.read(7);
-
-  currentPaletteIndex = EEPROM.read(8);
-  if (currentPaletteIndex >= paletteCount) {
-    currentPaletteIndex = paletteCount - 1;
-  }
-  twinkleSpeed = EEPROM.read(9);
-  twinkleDensity = EEPROM.read(10);
-
-  cooling = EEPROM.read(11);
-  sparking = EEPROM.read(12);
-
-  coolLikeIncandescent = EEPROM.read(13);
-
-  showClock = EEPROM.read(14);
-  clockBackgroundFade = EEPROM.read(15);
-}
-void readSettingsDefaultProduct()
-{
-  // check for "magic number" so we know settings have been written to EEPROM
-  // and it's not just full of random bytes
-
-  if (EEPROM.read(511) != 55) {
-    return;
-  }
-
-  brightness = EEPROM.read(0);
-
-  currentPatternIndex = EEPROM.read(1);
-  if (currentPatternIndex >= patternCount) {
-    currentPatternIndex = patternCount - 1;
-  }
-
-  byte r = EEPROM.read(2);
-  byte g = EEPROM.read(3);
-  byte b = EEPROM.read(4);
-
-  if (r == 0 && g == 0 && b == 0)
-  {
-  }
-  else
-  {
-    solidColor = CRGB(r, g, b);
-  }
-
-  power = EEPROM.read(5);
-
-  autoplay = EEPROM.read(6);
-  autoplayDuration = EEPROM.read(7);
-
-  currentPaletteIndex = EEPROM.read(8);
-  if (currentPaletteIndex >= paletteCount) {
-    currentPaletteIndex = paletteCount - 1;
-  }
-
-  twinkleSpeed = EEPROM.read(9);
-  twinkleDensity = EEPROM.read(10);
-
-  cooling = EEPROM.read(11);
-  sparking = EEPROM.read(12);
-
-  coolLikeIncandescent = EEPROM.read(13);
-}
-
-void readSettings() {
-  #if defined (PRODUCT_1628_RINGS)
-    readSettings1628Rings();
-  #elif defined(PRODUCT_ESP8266_THING)
-    readSettingsEsp8266Thing();
-  #elif defined(PRODUCT_KRAKEN64)
-    readSettingsKraken64();
-  #elif defined(PRODUCT_FIBONACCI512)
-    readSettingsFib512();
-  #elif defined(PRODUCT_FIBONACCI256)
-    readSettingsFib256();
-  #elif defined(PRODUCT_FIBONACCI128)
-    readSettingsFib128();
-  #elif defined(PRODUCT_FIBONACCI64_FULL) || defined(PRODUCT_FIBONACCI64_MINI) || defined(PRODUCT_FIBONACCI64_MICRO) || defined(PRODUCT_FIBONACCI64_NANO)
-    readSettingsFib64();
-  #elif defined(PRODUCT_FIBONACCI32)
-    readSettingsFib32();
-  #elif defined(PRODUCT_DEFAULT)
-    readSettingsDefaultProduct();
-  #else
-    #error "readSettings() not defined for product?"
-  #endif
-}
-void writeAndCommitSettings1628Rings() {
-  EEPROM.write(0, brightness);
-  EEPROM.write(1, currentPatternIndex);
-  EEPROM.write(2, solidColor.r);
-  EEPROM.write(3, solidColor.g);
-  EEPROM.write(4, solidColor.b);
-  EEPROM.write(5, power);
-  EEPROM.write(6, autoplay);
-  EEPROM.write(7, autoplayDuration);
-  EEPROM.write(8, currentPaletteIndex);
-  EEPROM.write(9, showClock);
-  EEPROM.write(10, clockBackgroundFade);
-
-  EEPROM.write(511, 55);
-  EEPROM.commit();
-}
-void writeAndCommitSettingsEsp8266Thing() // aka parallel
-{
-  EEPROM.write(0, brightness);
-  EEPROM.write(1, currentPatternIndex);
-  EEPROM.write(2, solidColor.r);
-  EEPROM.write(3, solidColor.g);
-  EEPROM.write(4, solidColor.b);
-  EEPROM.write(5, power);
-  EEPROM.write(6, autoplay);
-  EEPROM.write(7, autoplayDuration);
-  EEPROM.write(8, currentPaletteIndex);
-  EEPROM.write(9, twinkleSpeed);
-  EEPROM.write(10, twinkleDensity);
-  EEPROM.write(11, cooling);
-  EEPROM.write(12, sparking);
-
-  EEPROM.write(511, 55);
-  EEPROM.commit();
-}
-void writeAndCommitSettingsKraken64()
-{
-  EEPROM.write(0, brightness);
-  EEPROM.write(1, currentPatternIndex);
-  EEPROM.write(2, solidColor.r);
-  EEPROM.write(3, solidColor.g);
-  EEPROM.write(4, solidColor.b);
-  EEPROM.write(5, power);
-  EEPROM.write(6, autoplay);
-  EEPROM.write(7, autoplayDuration);
-  EEPROM.write(8, currentPaletteIndex);
-  EEPROM.write(9, twinkleSpeed);
-  EEPROM.write(10, twinkleDensity);
-  EEPROM.write(11, cooling);
-  EEPROM.write(12, sparking);
-
-  EEPROM.write(511, 55);
-  EEPROM.commit();
-}
-void writeAndCommitSettingsFib32()
-{
-  EEPROM.write(0, brightness);
-  EEPROM.write(1, currentPatternIndex);
-  EEPROM.write(2, solidColor.r);
-  EEPROM.write(3, solidColor.g);
-  EEPROM.write(4, solidColor.b);
-  EEPROM.write(5, power);
-  EEPROM.write(6, autoplay);
-  EEPROM.write(7, autoplayDuration);
-  EEPROM.write(8, currentPaletteIndex);
-  EEPROM.write(9, showClock);            // Note: not previously written for Fib64 boards
-  EEPROM.write(10, clockBackgroundFade);  // Note: not previously written for Fib64 boards
-  EEPROM.write(511, 55);
-  EEPROM.commit();
-}
-void writeAndCommitSettingsFib64()
-{
-  EEPROM.write(0, brightness);
-  EEPROM.write(1, currentPatternIndex);
-  EEPROM.write(2, solidColor.r);
-  EEPROM.write(3, solidColor.g);
-  EEPROM.write(4, solidColor.b);
-  EEPROM.write(5, power);
-  EEPROM.write(6, autoplay);
-  EEPROM.write(7, autoplayDuration);
-  EEPROM.write(8, currentPaletteIndex);
-  EEPROM.write(9, twinkleSpeed);
-  EEPROM.write(10, twinkleDensity);
-  EEPROM.write(11, cooling);
-  EEPROM.write(12, sparking);
-  EEPROM.write(13, coolLikeIncandescent); // Note: not previously written for Fib64 boards
-  EEPROM.write(14, showClock);            // Note: not previously written for Fib64 boards
-  EEPROM.write(15, clockBackgroundFade);  // Note: not previously written for Fib64 boards
-  EEPROM.write(511, 55);
-  EEPROM.commit();
-}
-void writeAndCommitSettingsFib128()
-{
+void writeAndCommitSettings() {
   EEPROM.write(0, brightness);
   EEPROM.write(1, currentPatternIndex);
   EEPROM.write(2, solidColor.r);
@@ -1586,98 +855,16 @@ void writeAndCommitSettingsFib128()
   EEPROM.write(13, coolLikeIncandescent);
   EEPROM.write(14, showClock);
   EEPROM.write(15, clockBackgroundFade);
-  EEPROM.write(511, 55);
+  EEPROM.write(511, SETTINGS_MAGIC_BYTE);
   EEPROM.commit();
-}
-void writeAndCommitSettingsFib256()
-{
-  EEPROM.write(0, brightness);
-  EEPROM.write(1, currentPatternIndex);
-  EEPROM.write(2, solidColor.r);
-  EEPROM.write(3, solidColor.g);
-  EEPROM.write(4, solidColor.b);
-  EEPROM.write(5, power);
-  EEPROM.write(6, autoplay);
-  EEPROM.write(7, autoplayDuration);
-  EEPROM.write(8, currentPaletteIndex);
-  EEPROM.write(9, showClock);
-  EEPROM.write(10, clockBackgroundFade);
-  EEPROM.write(511, 55);
-  EEPROM.commit();
-}
-void writeAndCommitSettingsFib512()
-{
-  EEPROM.write(0, brightness);
-  EEPROM.write(1, currentPatternIndex);
-  EEPROM.write(2, solidColor.r);
-  EEPROM.write(3, solidColor.g);
-  EEPROM.write(4, solidColor.b);
-  EEPROM.write(5, power);
-  EEPROM.write(6, autoplay);
-  EEPROM.write(7, autoplayDuration);
-  EEPROM.write(8, currentPaletteIndex);
-  EEPROM.write(9, twinkleSpeed);
-  EEPROM.write(10, twinkleDensity);
-  EEPROM.write(11, cooling);
-  EEPROM.write(12, sparking);
-  EEPROM.write(13, coolLikeIncandescent);
-  EEPROM.write(14, showClock);
-  EEPROM.write(15, clockBackgroundFade);
-  EEPROM.write(511, 55);
-  EEPROM.commit();
-}
-void writeAndCommitSettingsDefaultProduct()
-{
-  EEPROM.write(0, brightness);
-  EEPROM.write(1, currentPatternIndex);
-  EEPROM.write(2, solidColor.r);
-  EEPROM.write(3, solidColor.g);
-  EEPROM.write(4, solidColor.b);
-  EEPROM.write(5, power);
-  EEPROM.write(6, autoplay);
-  EEPROM.write(7, autoplayDuration);
-  EEPROM.write(8, currentPaletteIndex);
-  EEPROM.write(9, twinkleSpeed);
-  EEPROM.write(10, twinkleDensity);
-  EEPROM.write(11, cooling);
-  EEPROM.write(12, sparking);
-
-  EEPROM.write(511, 55);
-  EEPROM.commit();
-}
-
-void writeAndCommitSettings()
-{
-  #if defined (PRODUCT_1628_RINGS)
-    writeAndCommitSettings1628Rings();
-  #elif defined(PRODUCT_ESP8266_THING)
-    writeAndCommitSettingsEsp8266Thing();
-  #elif defined(PRODUCT_KRAKEN64)
-    writeAndCommitSettingsKraken64();
-  #elif defined(PRODUCT_FIBONACCI512)
-    writeAndCommitSettingsFib512();
-  #elif defined(PRODUCT_FIBONACCI256)
-    writeAndCommitSettingsFib256();
-  #elif defined(PRODUCT_FIBONACCI128)
-    writeAndCommitSettingsFib128();
-  #elif defined(PRODUCT_FIBONACCI64_FULL) || defined(PRODUCT_FIBONACCI64_MINI) || defined(PRODUCT_FIBONACCI64_MICRO) || defined(PRODUCT_FIBONACCI64_NANO)
-    writeAndCommitSettingsFib64();
-  #elif defined(PRODUCT_FIBONACCI32)
-    writeAndCommitSettingsFib32();
-  #elif defined(PRODUCT_DEFAULT)
-    writeAndCommitSettingsDefaultProduct();
-  #else
-    #error "writeAndCommitSettings() not defined for product?"
-  #endif
 }
 
 void setPower(uint8_t value)
 {
   power = value == 0 ? 0 : 1;
   writeAndCommitSettings();
-  broadcastInt("power", power);
+  broadcastInt("power", value);
 }
-
 void setAutoplay(uint8_t value)
 {
   autoplay = value == 0 ? 0 : 1;
@@ -2022,7 +1209,7 @@ void heatMap(const CRGBPalette16& palette, bool up)
 {
   fill_solid(leds, NUM_PIXELS, CRGB::Black);
 
-  // Add entropy to random number generator; we use a lot of it.
+  // Modify random number generator seed; we use a lot of it.  (Note: this is still deterministic)
   random16_add_entropy(random(256));
 
   // Array of temperature readings at each simulation cell

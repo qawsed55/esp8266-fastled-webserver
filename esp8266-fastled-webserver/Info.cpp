@@ -1,3 +1,5 @@
+#include "common.h"
+
 String WiFi_SSID(bool persistent) {
     struct station_config conf;
     if(persistent) wifi_station_get_config_default(&conf);

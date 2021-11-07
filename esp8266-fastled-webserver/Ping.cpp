@@ -31,6 +31,7 @@
 // this data to any 3rd parties, ever.
 
 // This was a feature I needed for my own devices, of which there are dozens.  :)
+#include "common.h"
 
 const bool discovery = false;
 const String serverName = "https://ping.evilgeniuslabs.org"; // address of server to ping

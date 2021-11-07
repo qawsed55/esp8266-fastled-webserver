@@ -16,6 +16,47 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "common.h"
+
+#if 0 && defined(PRODUCT_1628_RINGS)
+  // NOTE: these are entirely unused, and thus commented out entirely.
+  //       however, they are retained in case they would be useful in future.
+
+  // Polar coordinate mapping code for FastLED by Adam Haile, Maniacal Labs:
+  // http://maniacallabs.com/2015/05/04/review-code-adafruit-dotstar-disk/
+  // https://gist.github.com/adammhaile/a769f3ff87ff61f22ace
+
+  const uint8_t ringCount { 20 };           // Total Number of Rings. AdaFruit Disk has 10
+  const uint8_t lastRing { ringCount - 1 }; // for convenience
+
+  //Map rings on disk to indicies.
+  //Each represents one of the concentric rings.
+  //TODO: change to structure with min/max (inclusive), to clarify meaning of indices
+  const uint16_t rings[ringCount][2] {
+    // { first pixel of the ring, last pixel of the ring } // INCLUSIVE indices
+    {    0,    3 },
+    {    4,   15 },
+    {   16,   36 },
+    {   37,   65 },
+    {   66,  102 },
+    {  103,  147 },
+    {  148,  200 },
+    {  201,  262 },
+    {  263,  332 },
+    {  333,  410 },
+    {  411,  496 },
+    {  497,  590 },
+    {  591,  692 },
+    {  693,  802 },
+    {  803,  920 },
+    {  921, 1045 },
+    { 1046, 1180 },
+    { 1181, 1322 },
+    { 1323, 1467 },
+    { 1468, 1627 },
+  };
+#endif
+
 // drawNoise() function uses coordsX / coordsY
 #if HAS_COORDINATE_MAP
 
@@ -47,6 +88,9 @@ static uint16_t noisescale = 1; // scale is set dynamically once we've started u
 
 static uint8_t colorLoop = 0;
 
+
+
+
 static const CRGBPalette16 blackAndWhiteStripedPalette {
   CRGB::White, CRGB::Black, CRGB::Black, CRGB::Black,
   CRGB::White, CRGB::Black, CRGB::Black, CRGB::Black,
@@ -68,7 +112,6 @@ static const CRGBPalette16 blackAndBlueStripedPalette {
 //
 // Additionally, you can manually define your own color palettes, or you can write
 // code that creates color palettes on the fly.
-
 CRGB noiseXYZ(CRGBPalette16 palette, uint8_t hueReduce, int x, int y, int z)
 {
   uint8_t data = inoise8(x, y, z);
@@ -103,46 +146,24 @@ void drawNoise(CRGBPalette16 palette, uint8_t hueReduce = 0)
 }
 
 #if HAS_POLAR_COORDS // change to "HAS_CONCENTRIC_RINGS" ?
-
-// TODO: The calculations for x/y in drawPolarNoise() depend only upon constant array values.
-//       Pre-calculate those, and define a proxy for noise() routine that points to this
-//       pre-calculated array.  Then, the code is identical for all noise() functions, differing
-//       only in the X/Y arrays and palette used.
-
-// drawPolarNoise() uses rings[]
+// drawPolarNoise() uses angles[] and rings[][] (may move to using radii[])
 void drawPolarNoise(CRGBPalette16 palette, uint8_t hueReduce = 0)
 {
-  for (uint8_t ringIndex = 0; ringIndex < ringCount; ringIndex++) { // y == proxy for radius
-    uint16_t ringStart = rings[ringIndex][0];
-    uint16_t ringEnd = rings[ringIndex][1];
-    
-    for (uint16_t i = ringStart; i <= ringEnd; i++) { // x
-      uint8_t x = (i - ringStart) * (256 / (ringEnd - ringStart)); // proxy for angle[]?
-      uint8_t y = ringIndex * (128 / ringCount); // 128 / 20 == 6 ... or about half the total range ... could use (radius[] / 2)?
-      
-      int xoffset = noisescale * x;
-      int yoffset = noisescale * y;
+  for (uint16_t i = 0; i < NUM_PIXELS; i++) {
+    uint8_t x = angles[i];
+    uint8_t y = radii[i] / 2u; // divide by 2 to change range of values from [0..255] to [0..127]
 
-      leds[i] = noiseXYZ(palette, hueReduce, x + xoffset + noisex, y + yoffset + noisey, noisez);
-    }
+    int xoffset = noisescale * x;
+    int yoffset = noisescale * y;
+    leds[i] = noiseXYZ(palette, hueReduce, x + xoffset + noisex, y + yoffset + noisey, noisez);
   }
-  // for (uint8_t ringIndex = 1; ringIndex < ringCount; ringIndex++) {
-  //   uint16_t ringStart = rings[ringIndex][0];
-  //   uint16_t ringEnd = rings[ringIndex][1];
-  //   // blend the first pixel in the ring into the last
-  //   nblend(leds[ringStart], leds[ringEnd], 192);
-  //   nblend(leds[ringStart + 1], leds[ringEnd - 1], 128);
-  //   nblend(leds[ringStart + 2], leds[ringEnd - 2], 64);
-  // }
-  
   noisex += noisespeedx;
   noisey += noisespeedy;
   noisez += noisespeedz;
 }
-
 #endif // HAS_POLAR_COORDS
 
-#if HAS_POLAR_COORDS //  uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS //  gradientPalettePolarNoise() uses drawPolarNoise()
 // TODO: Check if gradientPalettePolarNoise() is equivalent to angleGradientPalette()?
 void gradientPalettePolarNoise() {
   noisespeedx = 4;
@@ -153,7 +174,7 @@ void gradientPalettePolarNoise() {
   drawPolarNoise(gCurrentPalette);
 }
 #endif
-#if HAS_POLAR_COORDS // palettePolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // palettePolarNoise() uses drawPolarNoise()
 void palettePolarNoise() {
   noisespeedx = 9;
   noisespeedy = 0;
@@ -173,7 +194,7 @@ void rainbowNoise() {
   drawNoise(RainbowColors_p);
 }
 
-#if HAS_POLAR_COORDS // rainbowPolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // rainbowPolarNoise() uses drawPolarNoise()
 void rainbowPolarNoise() {
   noisespeedx = 0;
   noisespeedy = 2;
@@ -193,7 +214,7 @@ void rainbowStripeNoise() {
   drawNoise(RainbowStripeColors_p);
 }
 
-#if HAS_POLAR_COORDS // rainbowStripePolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // rainbowStripePolarNoise() uses drawPolarNoise()
 void rainbowStripePolarNoise() {
   noisespeedx = 0;
   noisespeedy = 2;
@@ -213,7 +234,7 @@ void partyNoise() {
   drawNoise(PartyColors_p);
 }
 
-#if HAS_POLAR_COORDS // partyPolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // partyPolarNoise() uses drawPolarNoise()
 void partyPolarNoise() {
   noisespeedx = 9;
   noisespeedy = 0;
@@ -233,7 +254,7 @@ void forestNoise() {
   drawNoise(ForestColors_p);
 }
 
-#if HAS_POLAR_COORDS // forestPolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // forestPolarNoise() uses drawPolarNoise()
 void forestPolarNoise() {
   noisespeedx = 9;
   noisespeedy = 0;
@@ -253,7 +274,7 @@ void cloudNoise() {
   drawNoise(CloudColors_p);
 }
 
-#if HAS_POLAR_COORDS // cloudPolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // cloudPolarNoise() uses drawPolarNoise()
 void cloudPolarNoise() {
   noisespeedx = 2;
   noisespeedy = 0;
@@ -273,7 +294,7 @@ void fireNoise() {
   drawNoise(HeatColors_p, 60);
 }
 
-#if HAS_POLAR_COORDS // firePolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // firePolarNoise() uses drawPolarNoise()
 void firePolarNoise() {
 //  noisespeedx = 0; // 24;
 //  noisespeedy = -24;
@@ -298,7 +319,7 @@ void fireNoise2() {
   drawNoise(HeatColors_p);
 }
 
-#if HAS_POLAR_COORDS // firePolarNoise2() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // firePolarNoise2() uses drawPolarNoise()
 void firePolarNoise2() {
 //  noisespeedx = 0;
 //  noisespeedy = -8;
@@ -323,7 +344,7 @@ void lavaNoise() {
   drawNoise(LavaColors_p);
 }
 
-#if HAS_POLAR_COORDS // lavaPolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // lavaPolarNoise() uses drawPolarNoise()
 void lavaPolarNoise() {
   noisespeedx = 0;
   noisespeedy = -1;
@@ -343,7 +364,7 @@ void oceanNoise() {
   drawNoise(OceanColors_p);
 }
 
-#if HAS_POLAR_COORDS // oceanPolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // oceanPolarNoise() uses drawPolarNoise()
 void oceanPolarNoise() {
   noisespeedx = -1; // beatsin8(6, 0, 2) - 1;
   noisespeedy = 0;
@@ -363,7 +384,7 @@ void blackAndWhiteNoise() {
   drawNoise(blackAndWhiteStripedPalette);
 }
 
-#if HAS_POLAR_COORDS // blackAndWhitePolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // blackAndWhitePolarNoise() uses drawPolarNoise()
 void blackAndWhitePolarNoise() {
   noisespeedx = -4; // beatsin8(8, 0, 9) - 4;
   noisespeedy = 0;
@@ -383,7 +404,7 @@ void blackAndBlueNoise() {
   drawNoise(blackAndBlueStripedPalette);
 }
 
-#if HAS_POLAR_COORDS // blackAndBluePolarNoise() uses drawPolarNoise(), which uses rings[]
+#if HAS_POLAR_COORDS // blackAndBluePolarNoise() uses drawPolarNoise()
 void blackAndBluePolarNoise() {
   noisespeedx = 0;
   noisespeedy = -8; // beatsin8(8, 0, 16) - 8;

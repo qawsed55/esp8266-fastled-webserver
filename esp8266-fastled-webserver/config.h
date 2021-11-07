@@ -24,7 +24,7 @@
 // When compiling from Arduino, you can edit this file.
 // When compiling from PlatformIO, this is a reference for compiler flags.
 
-#define PRODUCT_DEFAULT
+// #define PRODUCT_DEFAULT
 // #define PRODUCT_FIBONACCI512
 // #define PRODUCT_FIBONACCI256
 // #define PRODUCT_FIBONACCI128
@@ -35,7 +35,7 @@
 // #define PRODUCT_FIBONACCI32
 // #define PRODUCT_KRAKEN64
 // #define PRODUCT_ESP8266_THING // aka parallel (6-output)
-// #define PRODUCT_1628_RINGS
+#define PRODUCT_1628_RINGS
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Additional configuration options ... defaults shown
@@ -48,7 +48,7 @@
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Include the configuration files for this build
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
-#if 1
+#if 1 // just for collapsing
     // Product-specific configuration
     #if defined(PRODUCT_DEFAULT)
         #include "include\configs\product\default.h"
@@ -86,7 +86,7 @@
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Set defaults for optional values
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
-#if 1
+#if 1 // just for collapsing
     #if !defined(UTC_OFFSET_IN_SECONDS)
         #define UTC_OFFSET_IN_SECONDS (-6L * 60L * 60L) // UTC-6 (East-coast US ... no DST support)
     #endif
@@ -99,7 +99,7 @@
 // Validate configuration options
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 1
+#if 1 // just for collapsing
     #if !defined(LED_TYPE)
         #error "LED_TYPE must be defined by product"
     #endif

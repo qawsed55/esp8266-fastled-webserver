@@ -1,3 +1,4 @@
+#include "common.h"
 
 //holds the current upload
 File fsUploadFile;
@@ -34,12 +35,15 @@ String getContentType(String filename){
 
 bool handleFileRead(String path){
   Serial.println("handleFileRead: " + path);
-  if(path.endsWith("/")) path += "index.htm";
+  if (path.endsWith("/")) {
+    path += "index.htm";
+  }
   String contentType = getContentType(path);
   String pathWithGz = path + ".gz";
-  if(MYFS.exists(pathWithGz) || MYFS.exists(path)){
-    if(MYFS.exists(pathWithGz))
-      path += ".gz";
+  if (MYFS.exists(pathWithGz) || MYFS.exists(path)) {
+    if (MYFS.exists(pathWithGz)) {
+      path = pathWithGz;
+    }
     File file = MYFS.open(path, "r");
     (void)webServer.streamFile(file, contentType);
     file.close();
@@ -50,58 +54,75 @@ bool handleFileRead(String path){
 }
 
 void handleFileUpload(){
-  if(webServer.uri() != "/edit") return;
+  if (webServer.uri() != "/edit") return;
+
   HTTPUpload& upload = webServer.upload();
-  if(upload.status == UPLOAD_FILE_START){
+  if (upload.status == UPLOAD_FILE_START) {
     String filename = upload.filename;
-    if(!filename.startsWith("/")) filename = "/"+filename;
+    if (!filename.startsWith("/")) {
+      filename = "/" + filename;
+    }
     Serial.print("handleFileUpload Name: "); Serial.println(filename);
     fsUploadFile = MYFS.open(filename, "w");
     filename = String();
-  } else if(upload.status == UPLOAD_FILE_WRITE){
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
     //Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
-    if(fsUploadFile)
+    if (fsUploadFile) {
       fsUploadFile.write(upload.buf, upload.currentSize);
-  } else if(upload.status == UPLOAD_FILE_END){
-    if(fsUploadFile)
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (fsUploadFile) {
       fsUploadFile.close();
+    }
     Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
   }
 }
 
 void handleFileDelete(){
-  if(webServer.args() == 0) return webServer.send(500, "text/plain", "BAD ARGS");
+  if (webServer.args() == 0) {
+    return webServer.send(500, "text/plain", "BAD ARGS");
+  }
+
   String path = webServer.arg(0);
   Serial.println("handleFileDelete: " + path);
-  if(path == "/")
+  if (path == "/") {
     return webServer.send(500, "text/plain", "BAD PATH");
-  if(!MYFS.exists(path))
+  }
+  if (!MYFS.exists(path)) {
     return webServer.send(404, "text/plain", "FileNotFound");
+  }
   MYFS.remove(path);
   webServer.send(200, "text/plain", "");
   path = String();
 }
 
 void handleFileCreate(){
-  if(webServer.args() == 0)
+  if (webServer.args() == 0) {
     return webServer.send(500, "text/plain", "BAD ARGS");
+  }
   String path = webServer.arg(0);
   Serial.println("handleFileCreate: " + path);
-  if(path == "/")
+  if (path == "/") {
     return webServer.send(500, "text/plain", "BAD PATH");
-  if(MYFS.exists(path))
+  }
+  if (MYFS.exists(path)) {
     return webServer.send(500, "text/plain", "FILE EXISTS");
+  }
   File file = MYFS.open(path, "w");
-  if(file)
+  if (file) {
     file.close();
-  else
+  } else {
     return webServer.send(500, "text/plain", "CREATE FAILED");
+  }
   webServer.send(200, "text/plain", "");
   path = String();
 }
 
 void handleFileList() {
-  if(!webServer.hasArg("dir")) {webServer.send(500, "text/plain", "BAD ARGS"); return;}
+  if (!webServer.hasArg("dir")) {
+    webServer.send(500, "text/plain", "BAD ARGS");
+    return;
+  }
   
   String path = webServer.arg("dir");
   Serial.println("handleFileList: " + path);
@@ -109,9 +130,11 @@ void handleFileList() {
   path = String();
 
   String output = "[";
-  while(dir.next()){
+  while (dir.next()) {
     File entry = dir.openFile("r");
-    if (output != "[") output += ',';
+    if (output != "[") {
+      output += ',';
+    }
     bool isDir = false;
     //bool isDir = entry.isDirectory();
 

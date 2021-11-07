@@ -15,9 +15,20 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "common.h"
+
+const String NumberFieldType = "Number";
+const String BooleanFieldType = "Boolean";
+const String SelectFieldType = "Select";
+const String ColorFieldType = "Color";
+const String SectionFieldType = "Section";
+const String StringFieldType = "String";
+const String LabelFieldType = "Label";
 
 uint8_t power = 1;
 uint8_t brightness = brightnessMap[brightnessIndex];
+
+
 
 //String setPower(String value) {
 //  power = value.toInt();
@@ -148,130 +159,232 @@ String getSaturationBpm() {
 }
 String setSaturationBpm(String value)
 {
-  saturationBpm = value.toInt(); return value;
+  saturationBpm = value.toInt();
+  return value;
 }
 
 String getSaturationMin() {
   return String(saturationMin);
 }
 String setSaturationMin(String value) {
-  saturationMin = value.toInt(); return value;
+  saturationMin = value.toInt();
+  return value;
 }
 
 String getSaturationMax() {
   return String(saturationMax);
 }
 String setSaturationMax(String value) {
-  saturationMax = value.toInt(); return value;
+  saturationMax = value.toInt();
+  return value;
 }
 
 String getBrightDepthBpm() {
   return String(brightDepthBpm);
 }
 String setBrightDepthBpm(String value) {
-  brightDepthBpm = value.toInt(); return value;
+  brightDepthBpm = value.toInt();
+  return value;
 }
 
 String getBrightDepthMin() {
   return String(brightDepthMin);
 }
 String setBrightDepthMin(String value) {
-  brightDepthMin = value.toInt(); return value;
+  brightDepthMin = value.toInt();
+  return value;
 }
 
 String getBrightDepthMax() {
   return String(brightDepthMax);
 }
 String setBrightDepthMax(String value) {
-  brightDepthMax = value.toInt(); return value;
+  brightDepthMax = value.toInt();
+  return value;
 }
 
 String getBrightThetaIncBpm() {
   return String(brightThetaIncBpm);
 }
 String setBrightThetaIncBpm(String value) {
-  brightThetaIncBpm = value.toInt(); return value;
+  brightThetaIncBpm = value.toInt();
+  return value;
 }
 
 String getBrightThetaIncMin() {
   return String(brightThetaIncMin);
 }
 String setBrightThetaIncMin(String value) {
-  brightThetaIncMin = value.toInt(); return value;
+  brightThetaIncMin = value.toInt();
+  return value;
 }
 
 String getBrightThetaIncMax() {
   return String(brightThetaIncMax);
 }
 String setBrightThetaIncMax(String value) {
-  brightThetaIncMax = value.toInt(); return value;
+  brightThetaIncMax = value.toInt();
+  return value;
 }
 
 String getMsMultiplierBpm() {
   return String(msMultiplierBpm);
 }
 String setMsMultiplierBpm(String value) {
-  msMultiplierBpm = value.toInt(); return value;
+  msMultiplierBpm = value.toInt();
+  return value;
 }
 
 String getMsMultiplierMin() {
   return String(msMultiplierMin);
 }
 String setMsMultiplierMin(String value) {
-  msMultiplierMin = value.toInt(); return value;
+  msMultiplierMin = value.toInt();
+  return value;
 }
 
 String getMsMultiplierMax() {
   return String(msMultiplierMax);
 }
 String setMsMultiplierMax(String value) {
-  msMultiplierMax = value.toInt(); return value;
+  msMultiplierMax = value.toInt();
+  return value;
 }
 
 String getHueIncBpm() {
   return String(hueIncBpm);
 }
 String setHueIncBpm(String value) {
-  hueIncBpm = value.toInt(); return value;
+  hueIncBpm = value.toInt();
+  return value;
 }
 
 String getHueIncMin() {
   return String(hueIncMin);
 }
 String setHueIncMin(String value) {
-  hueIncMin = value.toInt(); return value;
+  hueIncMin = value.toInt();
+  return value;
 }
 
 String getHueIncMax() {
   return String(hueIncMax);
 }
 String setHueIncMax(String value) {
-  hueIncMax = value.toInt(); return value;
+  hueIncMax = value.toInt();
+  return value;
 }
 
 String getSHueBpm() {
   return String(sHueBpm);
 }
 String setSHueBpm(String value) {
-  sHueBpm = value.toInt(); return value;
+  sHueBpm = value.toInt();
+  return value;
 }
 
 String getSHueMin() {
   return String(sHueMin);
 }
 String setSHueMin(String value) {
-  sHueMin = value.toInt(); return value;
+  sHueMin = value.toInt();
+  return value;
 }
 
 String getSHueMax() {
   return String(sHueMax);
 }
 String setSHueMax(String value) {
-  sHueMax = value.toInt(); return value;
+  sHueMax = value.toInt();
+  return value;
+}
+
+
+typedef String (*FieldSetter)(String);
+typedef String (*FieldGetter)();
+struct Field {
+  String name;
+  String label;
+  String type;
+  uint8_t min;
+  uint8_t max;
+  FieldGetter getValue;
+  FieldGetter getOptions;
+  FieldSetter setValue;
+};
+
+// passing array reference works fine, but need to make the function a template
+// to capture the array size... on the positive side, no need to pass `count` parameter
+template <size_t N>
+Field  getField(String name, const Field (&fields)[N]) {
+  for (uint8_t i = 0; i < N; i++) {
+    Field field = fields[i];
+    if (field.name == name) {
+      return field;
+    }
+  }
+  return Field();
+}
+template <size_t N>
+String getFieldValue(String name, const Field (&fields)[N]) {
+  Field field = getField(name, fields);
+  if (field.getValue) {
+    return field.getValue();
+  }
+  return String();
+}
+template <size_t N>
+String setFieldValue(String name, String value, const Field (&fields)[N]) {
+  Field field = getField(name, fields);
+  if (field.setValue) {
+    return field.setValue(value);
+  }
+  return String();
+}
+template <size_t N>
+String getFieldsJson(const Field (&fields)[N]) {
+  String json = "[";
+
+  for (uint8_t i = 0; i < N; i++) {
+    Field field = fields[i];
+
+    json += "{\"name\":\"" + field.name + "\",\"label\":\"" + field.label + "\",\"type\":\"" + field.type + "\"";
+
+    if(field.getValue) {
+      if (field.type == ColorFieldType || field.type == StringFieldType || field.type == LabelFieldType) {
+        json += ",\"value\":\"" + field.getValue() + "\"";
+      }
+      else {
+        json += ",\"value\":" + field.getValue();
+      }
+    }
+
+    if (field.type == NumberFieldType) {
+      json += ",\"min\":" + String(field.min);
+      json += ",\"max\":" + String(field.max);
+    }
+
+    if (field.getOptions) {
+      json += ",\"options\":[";
+      json += field.getOptions();
+      json += "]";
+    }
+
+    json += "}";
+
+    if (i < N - 1)
+      json += ",";
+  }
+
+  json += "]";
+
+  return json;
 }
 
 // name, label, type, min, max, getValue, getOptions, setValue
-FieldList fields = {
+// only items that use the 'getOptions': patterns and palettes
+// only items that support 'setValue': options used for pridePlayground
+const Field fields[] = {
     {"name",       "Name",       LabelFieldType,   0,            0, getName,       nullptr,     nullptr},
 
     {"power",      "Power",      BooleanFieldType, 0,            1, getPower,      nullptr,     nullptr},
@@ -307,31 +420,46 @@ FieldList fields = {
 
 
     //--------------------------------------------------------------------------------------------------------
-    {"prideSection",  "Pride",          SectionFieldType, 0,   0, nullptr, nullptr, nullptr},
+    {"prideSection",  "Pride Playground",         SectionFieldType, 0,   0, nullptr, nullptr, nullptr},
 
-    {"saturationBpm", "Saturation BPM", NumberFieldType,  0, 255, getSaturationBpm, nullptr, setSaturationBpm},
-    {"saturationMin", "Saturation Min", NumberFieldType,  0, 255, getSaturationMin, nullptr, setSaturationMin},
-    {"saturationMax", "Saturation Max", NumberFieldType,  0, 255, getSaturationMax, nullptr, setSaturationMax},
+    {"saturationBpm", "Saturation BPM",           NumberFieldType,  0, 255, getSaturationBpm, nullptr, setSaturationBpm},
+    {"saturationMin", "Saturation Min",           NumberFieldType,  0, 255, getSaturationMin, nullptr, setSaturationMin},
+    {"saturationMax", "Saturation Max",           NumberFieldType,  0, 255, getSaturationMax, nullptr, setSaturationMax},
 
-    {"brightDepthBpm", "Brightness Depth BPM", NumberFieldType, 0, 255, getBrightDepthBpm, nullptr, setBrightDepthBpm},
-    {"brightDepthMin", "Brightness Depth Min", NumberFieldType, 0, 255, getBrightDepthMin, nullptr, setBrightDepthMin},
-    {"brightDepthMax", "Brightness Depth Max", NumberFieldType, 0, 255, getBrightDepthMax, nullptr, setBrightDepthMax},
+    {"brightDepthBpm", "Brightness Depth BPM",    NumberFieldType, 0, 255, getBrightDepthBpm, nullptr, setBrightDepthBpm},
+    {"brightDepthMin", "Brightness Depth Min",    NumberFieldType, 0, 255, getBrightDepthMin, nullptr, setBrightDepthMin},
+    {"brightDepthMax", "Brightness Depth Max",    NumberFieldType, 0, 255, getBrightDepthMax, nullptr, setBrightDepthMax},
 
     {"brightThetaIncBpm", "Bright Theta Inc BPM", NumberFieldType, 0, 255, getBrightThetaIncBpm, nullptr, setBrightThetaIncBpm},
     {"brightThetaIncMin", "Bright Theta Inc Min", NumberFieldType, 0, 255, getBrightThetaIncMin, nullptr, setBrightThetaIncMin},
     {"brightThetaIncMax", "Bright Theta Inc Max", NumberFieldType, 0, 255, getBrightThetaIncMax, nullptr, setBrightThetaIncMax},
 
-    {"msMultiplierBpm", "Time Multiplier BPM", NumberFieldType, 0, 255, getMsMultiplierBpm, nullptr, setMsMultiplierBpm},
-    {"msMultiplierMin", "Time Multiplier Min", NumberFieldType, 0, 255, getMsMultiplierMin, nullptr, setMsMultiplierMin},
-    {"msMultiplierMax", "Time Multiplier Max", NumberFieldType, 0, 255, getMsMultiplierMax, nullptr, setMsMultiplierMax},
+    {"msMultiplierBpm", "Time Multiplier BPM",    NumberFieldType, 0, 255, getMsMultiplierBpm, nullptr, setMsMultiplierBpm},
+    {"msMultiplierMin", "Time Multiplier Min",    NumberFieldType, 0, 255, getMsMultiplierMin, nullptr, setMsMultiplierMin},
+    {"msMultiplierMax", "Time Multiplier Max",    NumberFieldType, 0, 255, getMsMultiplierMax, nullptr, setMsMultiplierMax},
 
-    {"hueIncBpm", "Hue Inc BPM", NumberFieldType, 0, 255, getHueIncBpm, nullptr, setHueIncBpm},
-    {"hueIncMin", "Hue Inc Min", NumberFieldType, 0, 255, getHueIncMin, nullptr, setHueIncMin},
-    {"hueIncMax", "Hue Inc Max", NumberFieldType, 0, 255, getHueIncMax, nullptr, setHueIncMax},
+    {"hueIncBpm", "Hue Inc BPM",                  NumberFieldType, 0, 255, getHueIncBpm, nullptr, setHueIncBpm},
+    {"hueIncMin", "Hue Inc Min",                  NumberFieldType, 0, 255, getHueIncMin, nullptr, setHueIncMin},
+    {"hueIncMax", "Hue Inc Max",                  NumberFieldType, 0, 255, getHueIncMax, nullptr, setHueIncMax},
 
-    {"sHueBpm", "S Hue BPM", NumberFieldType, 0, 255, getSHueBpm, nullptr, setSHueBpm},
-    {"sHueMin", "S Hue Min", NumberFieldType, 0, 255, getSHueMin, nullptr, setSHueMin},
-    {"sHueMax", "S Hue Max", NumberFieldType, 0, 255, getSHueMax, nullptr, setSHueMax},
+    {"sHueBpm", "S Hue BPM",                      NumberFieldType, 0, 255, getSHueBpm, nullptr, setSHueBpm},
+    {"sHueMin", "S Hue Min",                      NumberFieldType, 0, 255, getSHueMin, nullptr, setSHueMin},
+    {"sHueMax", "S Hue Max",                      NumberFieldType, 0, 255, getSHueMax, nullptr, setSHueMax},
 };
 
-uint8_t fieldCount = ARRAY_SIZE2(fields);
+const uint8_t fieldCount = ARRAY_SIZE2(fields);
+// TODO: consider using ArduinoJSON ... pre-allocated buffer, simpler usage, tested code
+
+Field getField(String name) {
+  return getField(name, fields);
+}
+String getFieldValue(String name) {
+  return getFieldValue(name, fields);
+}
+String setFieldValue(String name, String value) {
+  return setFieldValue(name, value, fields);
+}
+String getFieldsJson() {
+  return getFieldsJson(fields);
+}
+

@@ -1,4 +1,6 @@
-#if IS_FIBONACCI || HAS_COORDINATE_MAP
+#include "common.h"
+
+#if HAS_COORDINATE_MAP // IS_FIBONACCI and HAS_POLAR_COORDS each imply HAS_COORDINATE_MAP
 
 // Each Fibonacci board must define the following arrays:
 //
@@ -141,41 +143,6 @@
   static const uint8_t RADII_SCALE_DIVISOR    { 1 }; // radii[] values are already in range [0..255]
   static const uint8_t RADII_SCALE_MULTIPLIER { 1 }; // radii[] values are already in range [0..255]
 
-  // Polar coordinate mapping code for FastLED by Adam Haile, Maniacal Labs:
-  // http://maniacallabs.com/2015/05/04/review-code-adafruit-dotstar-disk/
-  // https://gist.github.com/adammhaile/a769f3ff87ff61f22ace
-
-  #define ringCount 20 // Total Number of Rings. AdaFruit Disk has 10
-  #define lastRing (ringCount-1) // for convenience
-
-  //Map rings on disk to indicies.
-  //Each represents one of the concentric rings.
-  //TODO: change to structure with min/max (inclusive), to clarify meaning of indices
-  const uint16_t rings[ringCount][2] {
-    // { first pixel of the ring, last pixel of the ring } // INCLUSIVE indices
-    {    0,    3 },
-    {    4,   15 },
-    {   16,   36 },
-    {   37,   65 },
-    {   66,  102 },
-    {  103,  147 },
-    {  148,  200 },
-    {  201,  262 },
-    {  263,  332 },
-    {  333,  410 },
-    {  411,  496 },
-    {  497,  590 },
-    {  591,  692 },
-    {  693,  803 },
-    {  804,  920 },
-    {  921, 1045 },
-    { 1046, 1180 },
-    { 1181, 1322 },
-    { 1323, 1467 },
-    { 1468, 1627 },
-  };
-
-
 #else
   #error "Unknown / Unsupported product ... no mappings defined"
 #endif
@@ -276,7 +243,7 @@ void andPixelAR(uint8_t angle, uint8_t dAngle, uint8_t startRadius, uint8_t endR
 #if HAS_RADIUS_PROXY // antialiasPixelAR() uses angles[] and radiusProxy[]
 // given an angle and radius (and delta for both), set pixels that fall inside that range,
 // fading the color from full-color at center, to off (black) at the outer edges.
-void antialiasPixelAR(uint8_t angle, uint8_t dAngle, uint8_t startRadius, uint8_t endRadius, CRGB color, CRGB leds[] = leds, int _NUM_PIXELS = NUM_PIXELS)
+void antialiasPixelAR(uint8_t angle, uint8_t dAngle, uint8_t startRadius, uint8_t endRadius, CRGB color, CRGB leds[], int _NUM_PIXELS)
 {
   // NOTE:
   // An earlier version of this routine had significant bugs.
