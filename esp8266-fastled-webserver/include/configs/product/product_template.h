@@ -39,22 +39,31 @@
    #define COLOR_ORDER                   RGB
 #endif
 
-// NUM_PIXELS  is the number of pixels to be 
+// NUM_PIXELS  is the total number of pixels to be generated / output
 #if !defined(NUM_PIXELS)
    #define NUM_PIXELS                    200
 #endif
+// AVAILABLE_MILLI_AMPS  is based on the power supply.  Recommended to use no more than 80% of actual rated maximum.
 #if !defined(AVAILABLE_MILLI_AMPS)
    #error #define AVAILABLE_MILLI_AMPS          x2000x // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
 #endif
+
+// MAX_MILLI_AMPS_PER_PIXEL  is used by FastLED to reduce change of exceeding total available milliamps.
 #if !defined(MAX_MILLI_AMPS_PER_PIXEL)
    #define MAX_MILLI_AMPS_PER_PIXEL      60   // IMPORTANT: set to larger value if necessary
 #endif
+
+// FRAMES_PER_SECOND is a frame LIMIT per second.  This is approximate.
 #if !defined(FRAMES_PER_SECOND)
    #define FRAMES_PER_SECOND             120
 #endif
+
+// DEFAULT_PATTERN_INDEX allows different products to default to different patterns
 #if !defined(DEFAULT_PATTERN_INDEX)
    #define DEFAULT_PATTERN_INDEX         0
 #endif
+
+// DEFAULT_BRIGHTNESS_INDEX allows different products to default to different brightness (e.g., from brightness[5] array)
 #if !defined(DEFAULT_BRIGHTNESS_INDEX)
    #define DEFAULT_BRIGHTNESS_INDEX      3
 #endif
@@ -134,9 +143,10 @@
 // ...
 // #define PIXELS_ON_DATA_PIN_n zc
 //
-// Up to the number of parallel outputs,
-// *AND* the board file must support the required number of channels
-// by defining the corresponding pins as follows:
+// *AND* the controller must support the required number of channels.
+//
+// The controller header file will define default values for the data pins,
+// by defining the following symbols:
 //
 // #define DATA_PIN    w
 // #define DATA_PIN_2  x
@@ -144,32 +154,19 @@
 // ...
 // #define DATA_PIN_n  z
 //
-
+// These can be overridden from the board-default values by defining these
+// values in the product header template.
+//
+// See Fibonacci512 and ESPTHING as examples of multi-channel outputs.
+//
 #if !defined(PARALLEL_OUTPUT_CHANNELS)
    #define PARALLEL_OUTPUT_CHANNELS   1
 #endif
-// Example from Fibonacci512:
-// 
-// #if !defined(PARALLEL_OUTPUT_CHANNELS)
-//    #define PARALLEL_OUTPUT_CHANNELS   4
-// #endif
-// #if !defined(PIXELS_ON_DATA_PIN_1)
-//    #define PIXELS_ON_DATA_PIN_1     121
-// #endif
-// #if !defined(PIXELS_ON_DATA_PIN_2)
-//    #define PIXELS_ON_DATA_PIN_2     120
-// #endif
-// #if !defined(PIXELS_ON_DATA_PIN_3)
-//    #define PIXELS_ON_DATA_PIN_3     121
-// #endif
-// #if !defined(PIXELS_ON_DATA_PIN_4)
-//    #define PIXELS_ON_DATA_PIN_4     150
-// #endif
 
-// By default, no IR support is included.  Define ENABLE_IR to enable IR support.
+// // By default, no IR support is included.  Define ENABLE_IR to enable IR support.
 // #define ENABLE_IR
-// NOTE: When ENABLE_IR is defined, can also override controller-specific default:
-// #define IR_RECV_PIN  D99
+// // When ENABLE_IR is defined, can also override controller-specific default:
+// // #define IR_RECV_PIN  D99
 
 
 
