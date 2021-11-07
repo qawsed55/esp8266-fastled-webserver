@@ -20,7 +20,7 @@
 #if !defined(ESP8266_FASTLED_WEBSERVER_CONTROLLER_ESP8266_H)
 #define ESP8266_FASTLED_WEBSERVER_CONTROLLER_ESP8266_H
 
-static_assert(PARALLEL_OUTPUT_CHANNELS <= 6, "ESP8266 only supports four parallel outputs");
+static_assert(PARALLEL_OUTPUT_CHANNELS <= 6, "ESP8266 only supports six parallel outputs");
 
 #if !defined(DATA_PIN)
    #if PARALLEL_OUTPUT_CHANNELS == 1
