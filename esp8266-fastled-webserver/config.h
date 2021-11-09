@@ -51,32 +51,32 @@
 #if 1 // just for collapsing
     // Product-specific configuration
     #if defined(PRODUCT_DEFAULT)
-        #include "include\configs\product\default.h"
+        #include "./include/configs/product/default.h"
     #elif defined(PRODUCT_1628_RINGS)
-        #include "include\configs\product\1628rings.h"
+        #include "./include/configs/product/1628rings.h"
     #elif defined(PRODUCT_KRAKEN64)
-        #include "include\configs\product\kraken64.h"
+        #include "./include/configs/product/kraken64.h"
     #elif defined(PRODUCT_FIBONACCI32)
-        #include "include\configs\product\fibonacci32.h"
+        #include "./include/configs/product/fibonacci32.h"
     #elif defined(PRODUCT_FIBONACCI64_FULL) || defined(PRODUCT_FIBONACCI64_MINI) || defined(PRODUCT_FIBONACCI64_MICRO) || defined(PRODUCT_FIBONACCI64_NANO)
-        #include "include\configs\product\fibonacci64.h"
+        #include "./include/configs/product/fibonacci64.h"
     #elif defined(PRODUCT_FIBONACCI128)
-        #include "include\configs\product\fibonacci128.h"
+        #include "./include/configs/product/fibonacci128.h"
     #elif defined(PRODUCT_FIBONACCI256)
-        #include "include\configs\product\fibonacci256.h"
+        #include "./include/configs/product/fibonacci256.h"
     #elif defined(PRODUCT_FIBONACCI512)
-        #include "include\configs\product\fibonacci512.h"
+        #include "./include/configs/product/fibonacci512.h"
     #elif defined(PRODUCT_ESP8266_THING) // aka parallel
-        #include "include\configs\product\esp8266_thing.h"
+        #include "./include/configs/product/esp8266_thing.h"
     #else
         #error "Must define product to build against"
     #endif
 
     // Board-specific configuration
     #if defined(ARDUINO_ARCH_ESP32)
-        #include "include\configs\controller\controller_esp32.h"
+        #include "./include/configs/controller/controller_esp32.h"
     #elif defined(ARDUINO_ARCH_ESP8266)
-        #include "include\configs\controller\controller_esp8266.h"
+        #include "./include/configs/controller/controller_esp8266.h"
     #else
         #error "Unknown board type ... currently only support ESP8266 and ESP32"
     #endif
