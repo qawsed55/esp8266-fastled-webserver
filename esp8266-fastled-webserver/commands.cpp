@@ -16,6 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common.h"
+
+#if defined(ENABLE_IR)
+
+IRrecv irReceiver(RECV_PIN);
+
 enum class InputCommand {
   None,
   Up,
@@ -75,98 +81,101 @@ enum class InputCommand {
   LightBlue,
 };
 
-// IR Raw Key Codes for SparkFun remote
-#define IRCODE_SPARKFUN_POWER  0x10EFD827 // 284153895
-#define IRCODE_SPARKFUN_A      0x10EFF807 //
-#define IRCODE_SPARKFUN_B      0x10EF7887
-#define IRCODE_SPARKFUN_C      0x10EF58A7
-#define IRCODE_SPARKFUN_UP     0x10EFA05F // 284139615
-#define IRCODE_SPARKFUN_LEFT   0x10EF10EF
-#define IRCODE_SPARKFUN_SELECT 0x10EF20DF
-#define IRCODE_SPARKFUN_RIGHT  0x10EF807F
-#define IRCODE_SPARKFUN_DOWN   0x10EF00FF
-#define IRCODE_SPARKFUN_HELD   0xFFFFFFFF
+#if 1 // collapse IR codes
+  // IR Raw Key Codes for SparkFun remote
+  #define IRCODE_SPARKFUN_POWER  0x10EFD827 // 284153895
+  #define IRCODE_SPARKFUN_A      0x10EFF807 //
+  #define IRCODE_SPARKFUN_B      0x10EF7887
+  #define IRCODE_SPARKFUN_C      0x10EF58A7
+  #define IRCODE_SPARKFUN_UP     0x10EFA05F // 284139615
+  #define IRCODE_SPARKFUN_LEFT   0x10EF10EF
+  #define IRCODE_SPARKFUN_SELECT 0x10EF20DF
+  #define IRCODE_SPARKFUN_RIGHT  0x10EF807F
+  #define IRCODE_SPARKFUN_DOWN   0x10EF00FF
+  #define IRCODE_SPARKFUN_HELD   0xFFFFFFFF
 
-// IR Raw Key Codes for Adafruit remote
-#define IRCODE_ADAFRUIT_HELD        0x7FFFFFFF // 4294967295
-#define IRCODE_ADAFRUIT_VOLUME_UP   0x00FD40BF // 16597183
-#define IRCODE_ADAFRUIT_PLAY_PAUSE  0x00FD807F // 16613503
-#define IRCODE_ADAFRUIT_VOLUME_DOWN 0x00FD00FF // 16580863
-#define IRCODE_ADAFRUIT_SETUP       0x00FD20DF // 16589023
-#define IRCODE_ADAFRUIT_UP          0x00FDA05F // 16621663
-#define IRCODE_ADAFRUIT_STOP_MODE   0x00FD609F // 16605343
-#define IRCODE_ADAFRUIT_LEFT        0x00FD10EF // 16584943
-#define IRCODE_ADAFRUIT_ENTER_SAVE  0x00FD906F // 16617583
-#define IRCODE_ADAFRUIT_RIGHT       0x00FD50AF // 16601263
-#define IRCODE_ADAFRUIT_0_10_PLUS   0x00FD30CF // 16593103
-#define IRCODE_ADAFRUIT_DOWN        0x00FDB04F // 16625743
-#define IRCODE_ADAFRUIT_BACK        0x00FD708F // 16609423
-#define IRCODE_ADAFRUIT_1           0x00FD08F7 // 16582903
-#define IRCODE_ADAFRUIT_2           0x00FD8877 // 16615543
-#define IRCODE_ADAFRUIT_3           0x00FD48B7 // 16599223
-#define IRCODE_ADAFRUIT_4           0x00FD28D7 // 16591063
-#define IRCODE_ADAFRUIT_5           0x00FDA857 // 16623703
-#define IRCODE_ADAFRUIT_6           0x00FD6897 // 16607383
-#define IRCODE_ADAFRUIT_7           0x00FD18E7 // 16586983
-#define IRCODE_ADAFRUIT_8           0x00FD9867 // 16619623
-#define IRCODE_ADAFRUIT_9           0x00FD58A7 // 16603303
+  // IR Raw Key Codes for Adafruit remote
+  #define IRCODE_ADAFRUIT_HELD        0x7FFFFFFF // 4294967295
+  #define IRCODE_ADAFRUIT_VOLUME_UP   0x00FD40BF // 16597183
+  #define IRCODE_ADAFRUIT_PLAY_PAUSE  0x00FD807F // 16613503
+  #define IRCODE_ADAFRUIT_VOLUME_DOWN 0x00FD00FF // 16580863
+  #define IRCODE_ADAFRUIT_SETUP       0x00FD20DF // 16589023
+  #define IRCODE_ADAFRUIT_UP          0x00FDA05F // 16621663
+  #define IRCODE_ADAFRUIT_STOP_MODE   0x00FD609F // 16605343
+  #define IRCODE_ADAFRUIT_LEFT        0x00FD10EF // 16584943
+  #define IRCODE_ADAFRUIT_ENTER_SAVE  0x00FD906F // 16617583
+  #define IRCODE_ADAFRUIT_RIGHT       0x00FD50AF // 16601263
+  #define IRCODE_ADAFRUIT_0_10_PLUS   0x00FD30CF // 16593103
+  #define IRCODE_ADAFRUIT_DOWN        0x00FDB04F // 16625743
+  #define IRCODE_ADAFRUIT_BACK        0x00FD708F // 16609423
+  #define IRCODE_ADAFRUIT_1           0x00FD08F7 // 16582903
+  #define IRCODE_ADAFRUIT_2           0x00FD8877 // 16615543
+  #define IRCODE_ADAFRUIT_3           0x00FD48B7 // 16599223
+  #define IRCODE_ADAFRUIT_4           0x00FD28D7 // 16591063
+  #define IRCODE_ADAFRUIT_5           0x00FDA857 // 16623703
+  #define IRCODE_ADAFRUIT_6           0x00FD6897 // 16607383
+  #define IRCODE_ADAFRUIT_7           0x00FD18E7 // 16586983
+  #define IRCODE_ADAFRUIT_8           0x00FD9867 // 16619623
+  #define IRCODE_ADAFRUIT_9           0x00FD58A7 // 16603303
 
-// IR Raw Key Codes for eTopxizu 44Key IR Remote Controller for 5050 3528 RGB LED Light Strip
-#define IRCODE_ETOPXIZU_HELD            0x7FFFFFFF // 4294967295
-#define IRCODE_ETOPXIZU_POWER           16712445
-#define IRCODE_ETOPXIZU_PLAY_PAUSE      16745085
-#define IRCODE_ETOPXIZU_BRIGHTNESS_UP   16726725
-#define IRCODE_ETOPXIZU_BRIGHTNESS_DOWN 16759365
+  // IR Raw Key Codes for eTopxizu 44Key IR Remote Controller for 5050 3528 RGB LED Light Strip
+  #define IRCODE_ETOPXIZU_HELD            0x7FFFFFFF // 4294967295
+  #define IRCODE_ETOPXIZU_POWER           16712445
+  #define IRCODE_ETOPXIZU_PLAY_PAUSE      16745085
+  #define IRCODE_ETOPXIZU_BRIGHTNESS_UP   16726725
+  #define IRCODE_ETOPXIZU_BRIGHTNESS_DOWN 16759365
 
-#define IRCODE_ETOPXIZU_DIY1            16724175
-#define IRCODE_ETOPXIZU_DIY2            16756815
-#define IRCODE_ETOPXIZU_DIY3            16740495
-#define IRCODE_ETOPXIZU_DIY4            16716015
-#define IRCODE_ETOPXIZU_DIY5            16748655
-#define IRCODE_ETOPXIZU_DIY6            16732335
+  #define IRCODE_ETOPXIZU_DIY1            16724175
+  #define IRCODE_ETOPXIZU_DIY2            16756815
+  #define IRCODE_ETOPXIZU_DIY3            16740495
+  #define IRCODE_ETOPXIZU_DIY4            16716015
+  #define IRCODE_ETOPXIZU_DIY5            16748655
+  #define IRCODE_ETOPXIZU_DIY6            16732335
 
-#define IRCODE_ETOPXIZU_JUMP3           16720095
-#define IRCODE_ETOPXIZU_JUMP7           16752735
-#define IRCODE_ETOPXIZU_FADE3           16736415
-#define IRCODE_ETOPXIZU_FADE7           16769055
-#define IRCODE_ETOPXIZU_FLASH           16764975
-#define IRCODE_ETOPXIZU_AUTO            16773135
+  #define IRCODE_ETOPXIZU_JUMP3           16720095
+  #define IRCODE_ETOPXIZU_JUMP7           16752735
+  #define IRCODE_ETOPXIZU_FADE3           16736415
+  #define IRCODE_ETOPXIZU_FADE7           16769055
+  #define IRCODE_ETOPXIZU_FLASH           16764975
+  #define IRCODE_ETOPXIZU_AUTO            16773135
 
-#define IRCODE_ETOPXIZU_QUICK           16771095
-#define IRCODE_ETOPXIZU_SLOW            16762935
+  #define IRCODE_ETOPXIZU_QUICK           16771095
+  #define IRCODE_ETOPXIZU_SLOW            16762935
 
-#define IRCODE_ETOPXIZU_RED_UP          16722135
-#define IRCODE_ETOPXIZU_RED_DOWN        16713975
+  #define IRCODE_ETOPXIZU_RED_UP          16722135
+  #define IRCODE_ETOPXIZU_RED_DOWN        16713975
 
-#define IRCODE_ETOPXIZU_GREEN_UP        16754775
-#define IRCODE_ETOPXIZU_GREEN_DOWN      16746615
+  #define IRCODE_ETOPXIZU_GREEN_UP        16754775
+  #define IRCODE_ETOPXIZU_GREEN_DOWN      16746615
 
-#define IRCODE_ETOPXIZU_BLUE_UP         16738455
-#define IRCODE_ETOPXIZU_BLUE_DOWN       16730295
+  #define IRCODE_ETOPXIZU_BLUE_UP         16738455
+  #define IRCODE_ETOPXIZU_BLUE_DOWN       16730295
 
-#define IRCODE_ETOPXIZU_RED             16718565
-#define IRCODE_ETOPXIZU_RED_ORANGE      16722645
-#define IRCODE_ETOPXIZU_ORANGE          16714485
-#define IRCODE_ETOPXIZU_YELLOW_ORANGE   16726215
-#define IRCODE_ETOPXIZU_YELLOW          16718055
+  #define IRCODE_ETOPXIZU_RED             16718565
+  #define IRCODE_ETOPXIZU_RED_ORANGE      16722645
+  #define IRCODE_ETOPXIZU_ORANGE          16714485
+  #define IRCODE_ETOPXIZU_YELLOW_ORANGE   16726215
+  #define IRCODE_ETOPXIZU_YELLOW          16718055
 
-#define IRCODE_ETOPXIZU_GREEN           16751205
-#define IRCODE_ETOPXIZU_LIME            16755285
-#define IRCODE_ETOPXIZU_AQUA            16747125
-#define IRCODE_ETOPXIZU_TEAL            16758855
-#define IRCODE_ETOPXIZU_NAVY            16750695
+  #define IRCODE_ETOPXIZU_GREEN           16751205
+  #define IRCODE_ETOPXIZU_LIME            16755285
+  #define IRCODE_ETOPXIZU_AQUA            16747125
+  #define IRCODE_ETOPXIZU_TEAL            16758855
+  #define IRCODE_ETOPXIZU_NAVY            16750695
 
-#define IRCODE_ETOPXIZU_BLUE            16753245
-#define IRCODE_ETOPXIZU_ROYAL_BLUE      16749165
-#define IRCODE_ETOPXIZU_PURPLE          16757325
-#define IRCODE_ETOPXIZU_INDIGO          16742535
-#define IRCODE_ETOPXIZU_MAGENTA         16734375
+  #define IRCODE_ETOPXIZU_BLUE            16753245
+  #define IRCODE_ETOPXIZU_ROYAL_BLUE      16749165
+  #define IRCODE_ETOPXIZU_PURPLE          16757325
+  #define IRCODE_ETOPXIZU_INDIGO          16742535
+  #define IRCODE_ETOPXIZU_MAGENTA         16734375
 
-#define IRCODE_ETOPXIZU_WHITE           16720605
-#define IRCODE_ETOPXIZU_PINK            16716525
-#define IRCODE_ETOPXIZU_LIGHT_PINK      16724685
-#define IRCODE_ETOPXIZU_BABY_BLUE       16775175
-#define IRCODE_ETOPXIZU_LIGHT_BLUE      16767015
+  #define IRCODE_ETOPXIZU_WHITE           16720605
+  #define IRCODE_ETOPXIZU_PINK            16716525
+  #define IRCODE_ETOPXIZU_LIGHT_PINK      16724685
+  #define IRCODE_ETOPXIZU_BABY_BLUE       16775175
+  #define IRCODE_ETOPXIZU_LIGHT_BLUE      16767015
+#endif
+
 
 bool sparkfunRemoteEnabled = true;
 bool adafruitRemoteEnabled = true;
@@ -216,7 +225,7 @@ unsigned long readIRCode() {
 unsigned long lastIrCode = 0;
 
 unsigned int holdStartTime = 0;
-unsigned int defaultHoldDelay = 500;
+// unsigned int defaultHoldDelay = 500;
 bool isHolding = false;
 
 unsigned int zeroStartTime = 0;
@@ -285,22 +294,6 @@ unsigned long readIRCode(unsigned int holdDelay) {
   }
 
   return 0;
-}
-
-void heldButtonHasBeenHandled() {
-  lastIrCode = 0;
-  isHolding = false;
-  holdStartTime = 0;
-}
-
-unsigned long waitForIRCode() {
-
-  unsigned long irCode = readIRCode();
-  while ((irCode == 0) || (irCode == 0xFFFFFFFF)) {
-    delay(200);
-    irCode = readIRCode();
-  }
-  return irCode;
 }
 
 InputCommand getCommand(unsigned long input) {
@@ -482,3 +475,212 @@ InputCommand readCommand() {
 InputCommand readCommand(unsigned int holdDelay) {
   return getCommand(readIRCode(holdDelay));
 }
+
+void handleIrInput()
+{
+ InputCommand command = readCommand();
+
+ if (command != InputCommand::None) {
+   Serial.print("command: ");
+   Serial.println((int) command);
+ }
+
+ switch (command) {
+   case InputCommand::Up: {
+       adjustPattern(true);
+       break;
+     }
+   case InputCommand::Down: {
+       adjustPattern(false);
+       break;
+     }
+   case InputCommand::Power: {
+       setPower(power == 0 ? 1 : 0);
+       break;
+     }
+   case InputCommand::BrightnessUp: {
+       adjustBrightness(true);
+       break;
+     }
+   case InputCommand::BrightnessDown: {
+       adjustBrightness(false);
+       break;
+     }
+   case InputCommand::PlayMode: { // toggle pause/play
+       setAutoplay(!autoplay);
+       break;
+     }
+
+   // pattern buttons
+
+   case InputCommand::Pattern1: {
+       setPattern(0);
+       break;
+     }
+   case InputCommand::Pattern2: {
+       setPattern(1);
+       break;
+     }
+   case InputCommand::Pattern3: {
+       setPattern(2);
+       break;
+     }
+   case InputCommand::Pattern4: {
+       setPattern(3);
+       break;
+     }
+   case InputCommand::Pattern5: {
+       setPattern(4);
+       break;
+     }
+   case InputCommand::Pattern6: {
+       setPattern(5);
+       break;
+     }
+   case InputCommand::Pattern7: {
+       setPattern(6);
+       break;
+     }
+   case InputCommand::Pattern8: {
+       setPattern(7);
+       break;
+     }
+   case InputCommand::Pattern9: {
+       setPattern(8);
+       break;
+     }
+   case InputCommand::Pattern10: {
+       setPattern(9);
+       break;
+     }
+   case InputCommand::Pattern11: {
+       setPattern(10);
+       break;
+     }
+   case InputCommand::Pattern12: {
+       setPattern(11);
+       break;
+     }
+
+   // custom color adjustment buttons
+
+   case InputCommand::RedUp: {
+       solidColor.red += 8;
+       setSolidColor(solidColor);
+       break;
+     }
+   case InputCommand::RedDown: {
+       solidColor.red -= 8;
+       setSolidColor(solidColor);
+       break;
+     }
+   case InputCommand::GreenUp: {
+       solidColor.green += 8;
+       setSolidColor(solidColor);
+       break;
+     }
+   case InputCommand::GreenDown: {
+       solidColor.green -= 8;
+       setSolidColor(solidColor);
+       break;
+     }
+   case InputCommand::BlueUp: {
+       solidColor.blue += 8;
+       setSolidColor(solidColor);
+       break;
+     }
+   case InputCommand::BlueDown: {
+       solidColor.blue -= 8;
+       setSolidColor(solidColor);
+       break;
+     }
+
+   // color buttons
+
+   case InputCommand::Red: {
+       setSolidColor(CRGB::Red);
+       break;
+     }
+   case InputCommand::RedOrange: {
+       setSolidColor(CRGB::OrangeRed);
+       break;
+     }
+   case InputCommand::Orange: {
+       setSolidColor(CRGB::Orange);
+       break;
+     }
+   case InputCommand::YellowOrange: {
+       setSolidColor(CRGB::Goldenrod);
+       break;
+     }
+   case InputCommand::Yellow: {
+       setSolidColor(CRGB::Yellow);
+       break;
+     }
+
+   case InputCommand::Green: {
+       setSolidColor(CRGB::Green);
+       break;
+     }
+   case InputCommand::Lime: {
+       setSolidColor(CRGB::Lime);
+       break;
+     }
+   case InputCommand::Aqua: {
+       setSolidColor(CRGB::Aqua);
+       break;
+     }
+   case InputCommand::Teal: {
+       setSolidColor(CRGB::Teal);
+       break;
+     }
+   case InputCommand::Navy: {
+       setSolidColor(CRGB::Navy);
+       break;
+     }
+
+   case InputCommand::Blue: {
+       setSolidColor(CRGB::Blue);
+       break;
+     }
+   case InputCommand::RoyalBlue: {
+       setSolidColor(CRGB::RoyalBlue);
+       break;
+     }
+   case InputCommand::Purple: {
+       setSolidColor(CRGB::Purple);
+       break;
+     }
+   case InputCommand::Indigo: {
+       setSolidColor(CRGB::Indigo);
+       break;
+     }
+   case InputCommand::Magenta: {
+       setSolidColor(CRGB::Magenta);
+       break;
+     }
+
+   case InputCommand::White: {
+       setSolidColor(CRGB::White);
+       break;
+     }
+   case InputCommand::Pink: {
+       setSolidColor(CRGB::Pink);
+       break;
+     }
+   case InputCommand::LightPink: {
+       setSolidColor(CRGB::LightPink);
+       break;
+     }
+   case InputCommand::BabyBlue: {
+       setSolidColor(CRGB::CornflowerBlue);
+       break;
+     }
+   case InputCommand::LightBlue: {
+       setSolidColor(CRGB::LightBlue);
+       break;
+     }
+ }
+}
+
+#endif

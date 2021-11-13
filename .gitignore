@@ -5,3 +5,6 @@ buildcache/
 arduino.json
 c_cpp_properties.json
 .vscode
+
+/platformio-override.ini
+/release/

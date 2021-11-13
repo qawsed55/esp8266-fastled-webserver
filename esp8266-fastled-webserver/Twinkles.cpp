@@ -1,5 +1,7 @@
 // based on ColorTwinkles by Mark Kriegsman: https://gist.github.com/kriegsman/5408ecd397744ba0393e
 
+#include "common.h"
+
 #define STARTING_BRIGHTNESS 64
 #define FADE_IN_SPEED       32
 #define FADE_OUT_SPEED      20
@@ -26,7 +28,7 @@ CRGB makeDarker( const CRGB& color, fract8 howMuchDarker)
 // per pixel.  This requires a bunch of bit wrangling,
 // but conserves precious RAM.  The cost is a few
 // cycles and about 100 bytes of flash program memory.
-uint8_t  directionFlags[ (NUM_LEDS + 7) / 8];
+uint8_t  directionFlags[ (NUM_PIXELS + 7) / 8];
 
 bool getPixelDirection( uint16_t i)
 {
@@ -53,7 +55,7 @@ void setPixelDirection( uint16_t i, bool dir)
 
 void brightenOrDarkenEachPixel( fract8 fadeUpAmount, fract8 fadeDownAmount)
 {
-  for ( uint16_t i = 0; i < NUM_LEDS; i++) {
+  for ( uint16_t i = 0; i < NUM_PIXELS; i++) {
     if ( getPixelDirection(i) == GETTING_DARKER) {
       // This pixel is getting darker
       leds[i] = makeDarker( leds[i], fadeDownAmount);
@@ -79,7 +81,7 @@ void colortwinkles()
   
     // Now consider adding a new random twinkle
     if ( random8() < DENSITY ) {
-      int pos = random16(NUM_LEDS);
+      int pos = random16(NUM_PIXELS);
       if ( !leds[pos]) {
         leds[pos] = ColorFromPalette( gCurrentPalette, random8(), STARTING_BRIGHTNESS, NOBLEND);
         setPixelDirection(pos, GETTING_BRIGHTER);

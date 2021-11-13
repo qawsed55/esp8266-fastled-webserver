@@ -28,6 +28,16 @@ var allData = {};
 $(document).ready(function() {
   $("#status").html("Connecting, please wait...");
 
+  // info gathers a lot more information ...
+  // just need product name for main page.
+  $.get(urlBase + "product", function (data) {
+    const name = data['productName'];
+    // Set overall page title
+    $(document).attr("title", name + " by EvilGenius Labs");
+    // Set text of element with id 'product'
+    $("#product").text(name);
+  });
+
   $("#btnTop").click(function () {
     $([document.documentElement, document.body]).animate(
       {
@@ -459,6 +469,9 @@ function addSectionField(field) {
 
   template.attr("id", "form-group-section-" + field.name);
   template.attr("data-field-type", field.type);
+
+  var label = template.find(".section-header-text");
+  label.text(field.label);
 
   $("#form").append(template);
 }

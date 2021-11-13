@@ -1,6 +1,6 @@
 /*
    ESP8266 FastLED WebServer: https://github.com/jasoncoon/esp8266-fastled-webserver
-   Copyright (C) 2015-2018 Jason Coon
+   Copyright (C) Jason Coon
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,67 +16,24 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#define FASTLED_ALLOW_INTERRUPTS 1
-//#define INTERRUPT_THRESHOLD 1
-#define FASTLED_INTERRUPT_RETRY_COUNT 0
-
-#include <FastLED.h>
-FASTLED_USING_NAMESPACE
-
-extern "C" {
-#include "user_interface.h"
-}
-
-// #include <FS.h>
-#include <LittleFS.h>
-#define MYFS LittleFS
-
-
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266HTTPUpdateServer.h>
-#include <ESP8266HTTPClient.h>
-//#include <WebSocketsServer.h>
-
-#include <EEPROM.h>
-//#include <IRremoteESP8266.h>
-#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager/tree/development
-#include "GradientPalettes.h"
-
-#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
-
-#include "Field.h"
-
-//#define RECV_PIN D4
-//IRrecv irReceiver(RECV_PIN);
-
-//#include "Commands.h"
+#include "common.h"
 
 WiFiManager wifiManager;
 ESP8266WebServer webServer(80);
 //WebSocketsServer webSocketsServer = WebSocketsServer(81);
 ESP8266HTTPUpdateServer httpUpdateServer;
 
-#include "FSBrowser.h"
-
-#define DATA_PIN      D5
-#define LED_TYPE      WS2811
-#define COLOR_ORDER   RGB
-#define NUM_LEDS      200
-
-#define MILLI_AMPS         2000 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
-#define FRAMES_PER_SECOND  120  // here you can control the speed. With the Access Point / Web Server the animations run a bit slower.
+// Define NTP Client to get time
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", UTC_OFFSET_IN_SECONDS, NTP_UPDATE_THROTTLE_MILLLISECONDS);
 
 String nameString;
 
-#include "Ping.h"
-
-CRGB leds[NUM_LEDS];
+CRGB leds[NUM_PIXELS];
 
 const uint8_t brightnessCount = 5;
-uint8_t brightnessMap[brightnessCount] = { 16, 32, 64, 128, 255 };
-uint8_t brightnessIndex = 3;
+const uint8_t brightnessMap[brightnessCount] = { 16, 32, 64, 128, 255 };
+uint8_t brightnessIndex = DEFAULT_BRIGHTNESS_INDEX;
 
 // ten seconds per color palette makes a good demo
 // 20-120 is better for deployment
@@ -96,10 +53,6 @@ uint8_t speed = 30;
 
 ///////////////////////////////////////////////////////////////////////
 
-// Forward declarations of an array of cpt-city gradient palettes, and
-// a count of how many there are.  The actual color palette definitions
-// are at the bottom of this file.
-extern const TProgmemRGBGradientPalettePtr gGradientPalettes[];
 
 uint8_t gCurrentPaletteNumber = 0;
 
@@ -108,11 +61,14 @@ CRGBPalette16 gTargetPalette( gGradientPalettes[0] );
 
 CRGBPalette16 IceColors_p = CRGBPalette16(CRGB::Black, CRGB::Blue, CRGB::Aqua, CRGB::White);
 
-uint8_t currentPatternIndex = 0; // Index number of which pattern is current
+uint8_t currentPatternIndex = DEFAULT_PATTERN_INDEX; // Index number of which pattern is current
 uint8_t autoplay = 0;
 
 uint8_t autoplayDuration = 10;
 unsigned long autoPlayTimeout = 0;
+
+uint8_t showClock = 0;
+uint8_t clockBackgroundFade = 240;
 
 uint8_t currentPaletteIndex = 0;
 
@@ -123,32 +79,135 @@ CRGB solidColor = CRGB::Blue;
 // scale the brightness of all pixels down
 void dimAll(byte value)
 {
-  for (int i = 0; i < NUM_LEDS; i++) {
-    leds[i].nscale8(value);
+  for (auto led : leds) {
+    led.nscale8(value);
   }
 }
 
-typedef void (*Pattern)();
-typedef Pattern PatternList[];
-typedef struct {
-  Pattern pattern;
-  String name;
-} PatternAndName;
-typedef PatternAndName PatternAndNameList[];
-
-#include "Twinkles.h"
-#include "TwinkleFOX.h"
-#include "PridePlayground.h"
-#include "ColorWavesPlayground.h"
-
 // List of patterns to cycle through.  Each is defined as a separate function below.
 
-PatternAndNameList patterns = {
-  { pride,                  "Pride" },
+// NOTE: HAS_POLAR_COORDS implies HAS_COORDINATE_MAP
+//       IS_FIBONACCI implies HAS_COORDINATE_MAP
+
+// TODO: Consider patterns listing name and all variants:
+//       [] original variant
+//       [] fibonacci variant (or nullptr)
+//       [] concentric ring variant (or nullptr)
+//       [] coordinates variant (or nullptr)
+// WHY #1: Easier to manage defining the patterns via a macro,
+//         which discards arguments that do not apply for a given
+//         board, than this #if/#endif spaghetti mess.
+// WHY #2: Easier for users to see correlations between the patterns,
+//         when switching between them.
+// WHY #3: May eventually be able to change mapping for standard
+//         effects (emulating led array, but using custom mapping),
+//         which could further reduce code duplication.
+
+const PatternAndName patterns[] = {
+  { pride,          "Pride" },
+#if IS_FIBONACCI
+  { prideFibonacci, "Pride Fibonacci" },
+#endif
+
   { colorWaves,             "Color Waves" },
+
+#if HAS_COORDINATE_MAP // really a wrong name... and likely doing way more computation than necessary
+  { radarSweepPalette, "Radar Sweep Palette" },
+#endif
+#if HAS_POLAR_COORDS // really a wrong name... and likely doing way more computation than necessary
+  // noise patterns (Polar variations)
+  { gradientPalettePolarNoise,         "Gradient Palette Polar Noise" },
+  { palettePolarNoise,                 "Palette Polar Noise" },
+  { firePolarNoise,                    "Fire Polar Noise" },
+  { firePolarNoise2,                   "Fire Polar Noise 2" },
+  { lavaPolarNoise,                    "Lava Polar Noise" },
+  { rainbowPolarNoise,                 "Rainbow Polar Noise" },
+  { rainbowStripePolarNoise,           "Rainbow Stripe Polar Noise" },
+  { partyPolarNoise,                   "Party Polar Noise" },
+  { forestPolarNoise,                  "Forest Polar Noise" },
+  { cloudPolarNoise,                   "Cloud Polar Noise" },
+  { oceanPolarNoise,                   "Ocean Polar Noise" },
+  { blackAndWhitePolarNoise,           "Black & White Polar Noise" },
+  { blackAndBluePolarNoise,            "Black & Blue Polar Noise" },
+#endif
+
+#if IS_FIBONACCI
+  { colorWavesFibonacci,               "Color Waves Fibonacci" },
+
+  { pridePlayground,                   "Pride Playground" },
+  { pridePlaygroundFibonacci,          "Pride Playground Fibonacci" },
+
+  { colorWavesPlayground,              "Color Waves Playground" },
+  { colorWavesPlaygroundFibonacci,     "Color Waves Playground Fibonacci" },
+#endif
+
+  { wheel,                  "Wheel" },
+#if (PARALLEL_OUTPUT_CHANNELS > 1)
+  { multi_test,             "Multi Test" },
+#endif
+
+#if IS_FIBONACCI
+  { swirlFibonacci,                    "Swirl Fibonacci"},
+  { fireFibonacci,                     "Fire Fibonacci" },
+  { waterFibonacci,                    "Water Fibonacci" },
+  { emitterFibonacci,                  "Emitter Fibonacci" },
+
+  { pacifica_loop,                     "Pacifica" },
+  { pacifica_fibonacci_loop,           "Pacifica Fibonacci" },
+#endif
+
+#if HAS_COORDINATE_MAP
+  // matrix patterns
+  { anglePalette,                      "Angle Palette" },
+  { radiusPalette,                     "Radius Palette" },
+  { xPalette,                          "X Axis Palette" },
+  { yPalette,                          "Y Axis Palette" },
+  { xyPalette,                         "XY Axis Palette" },
+
+  { angleGradientPalette,              "Angle Gradient Palette" },
+  { radiusGradientPalette,             "Radius Gradient Palette" },
+  { xGradientPalette,                  "X Axis Gradient Palette" },
+  { yGradientPalette,                  "Y Axis Gradient Palette" },
+  { xyGradientPalette,                 "XY Axis Gradient Palette" },
+#endif
+
+#if HAS_COORDINATE_MAP
+  // noise patterns
+  { fireNoise,                         "Fire Noise" },
+  { fireNoise2,                        "Fire Noise 2" },
+  { lavaNoise,                         "Lava Noise" },
+  { rainbowNoise,                      "Rainbow Noise" },
+  { rainbowStripeNoise,                "Rainbow Stripe Noise" },
+  { partyNoise,                        "Party Noise" },
+  { forestNoise,                       "Forest Noise" },
+  { cloudNoise,                        "Cloud Noise" },
+  { oceanNoise,                        "Ocean Noise" },
+  { blackAndWhiteNoise,                "Black & White Noise" },
+  { blackAndBlueNoise,                 "Black & Blue Noise" },
+#endif
+
+#if IS_FIBONACCI
+  { drawAnalogClock,                   "Analog Clock" },
+
+  { drawSpiralAnalogClock13,           "Spiral Analog Clock 13" },
+  { drawSpiralAnalogClock21,           "Spiral Analog Clock 21" },
+  { drawSpiralAnalogClock34,           "Spiral Analog Clock 34" },
+  { drawSpiralAnalogClock55,           "Spiral Analog Clock 55" },
+  { drawSpiralAnalogClock89,           "Spiral Analog Clock 89" },
+
+  { drawSpiralAnalogClock21and34,      "Spiral Analog Clock 21 & 34"},
+  { drawSpiralAnalogClock13_21_and_34, "Spiral Analog Clock 13, 21 & 34"},
+  { drawSpiralAnalogClock34_21_and_13, "Spiral Analog Clock 34, 21 & 13"},
+#endif
 
   { pridePlayground,        "Pride Playground" },
   { colorWavesPlayground,   "Color Waves Playground" },
+
+#if defined(PRODUCT_KRAKEN64)
+  // Kraken patterns ... these use body[], which is also used as a proxy for radius...
+  { radiusPalette,             "Kraken Palette" },
+  { radiusGradientPalette,     "Kraken Gradient Palette" },
+#endif
 
   // twinkle patterns
   { rainbowTwinkles,        "Rainbow Twinkles" },
@@ -182,16 +241,12 @@ PatternAndNameList patterns = {
   { fire,                   "Fire" },
   { water,                  "Water" },
 
-  { showSolidColor,         "Solid Color" }
+  { strandTest,             "Strand Test" },
+
+  { showSolidColor,         "Solid Color" } // This *must* be the last pattern
 };
 
-const uint8_t patternCount = ARRAY_SIZE(patterns);
-
-typedef struct {
-  CRGBPalette16 palette;
-  String name;
-} PaletteAndName;
-typedef PaletteAndName PaletteAndNameList[];
+const uint8_t patternCount = ARRAY_SIZE2(patterns);
 
 const CRGBPalette16 palettes[] = {
     RainbowColors_p,
@@ -204,7 +259,7 @@ const CRGBPalette16 palettes[] = {
     HeatColors_p
 };
 
-const uint8_t paletteCount = ARRAY_SIZE(palettes);
+const uint8_t paletteCount = ARRAY_SIZE2(palettes);
 
 const String paletteNames[paletteCount] = {
     "Rainbow",
@@ -217,7 +272,11 @@ const String paletteNames[paletteCount] = {
     "Heat",
 };
 
-#include "Fields.h"
+// TODO / BUGBUG -- should this be ESP8266-specific?  Is this only for when IR enabled ???
+// FIB128 did not have this...
+#if defined(PRODUCT_FIBONACCI256)
+  ADC_MODE(ADC_VCC);
+#endif
 
 void setup() {
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP    
@@ -226,23 +285,50 @@ void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
 
-  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);         // for WS2812 (Neopixel)
-  //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS); // for APA102 (Dotstar)
+  uint16_t milliAmps = (AVAILABLE_MILLI_AMPS < MAX_MILLI_AMPS) ? AVAILABLE_MILLI_AMPS : MAX_MILLI_AMPS;
+
+  #if PARALLEL_OUTPUT_CHANNELS == 1
+  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_PIXELS);         // for WS2812 (Neopixel)
+  #else
+  #if PARALLEL_OUTPUT_CHANNELS >= 2
+  FastLED.addLeds<LED_TYPE, DATA_PIN,   COLOR_ORDER>(leds, LedOffset<1>(), LedCount<1>());
+  FastLED.addLeds<LED_TYPE, DATA_PIN_2, COLOR_ORDER>(leds, LedOffset<2>(), LedCount<2>());
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 3
+  FastLED.addLeds<LED_TYPE, DATA_PIN_3, COLOR_ORDER>(leds, LedOffset<3>(), LedCount<3>());
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 4
+  FastLED.addLeds<LED_TYPE, DATA_PIN_4, COLOR_ORDER>(leds, LedOffset<4>(), LedCount<4>());
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 5
+  FastLED.addLeds<LED_TYPE, DATA_PIN_5, COLOR_ORDER>(leds, LedOffset<5>(), LedCount<4>());
+  #endif
+  #if PARALLEL_OUTPUT_CHANNELS >= 6
+  FastLED.addLeds<LED_TYPE, DATA_PIN_6, COLOR_ORDER>(leds, LedOffset<6>(), LedCount<4>());
+  #endif
+  #endif // PARALLEL_OUTPUT_CHANNELS
+
+  //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_PIXELS); // for APA102 (Dotstar)
+
   FastLED.setDither(false);
   FastLED.setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(brightness);
-  FastLED.setMaxPowerInVoltsAndMilliamps(5, MILLI_AMPS);
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  FastLED.setMaxPowerInVoltsAndMilliamps(5, milliAmps);
+  fill_solid(leds, NUM_PIXELS, CRGB::Black);
   FastLED.show();
 
-  EEPROM.begin(512);
+  EEPROM.begin(512); // TODO: move settings (currently EEPROM) to fields.hpp/.cpp
   readSettings();
 
   FastLED.setBrightness(brightness);
 
-  //  irReceiver.enableIRIn(); // Start the receiver
+#if defined(ENABLE_IR)
+  irReceiver.enableIRIn(); // Start the receiver
+#endif
 
   Serial.println();
+  Serial.println(F("System Info:"));
+  Serial.print( F("Max mA: ") ); Serial.println(milliAmps);
   Serial.print( F("Heap: ") ); Serial.println(system_get_free_heap_size());
   Serial.print( F("Boot Vers: ") ); Serial.println(system_get_boot_version());
   Serial.print( F("CPU: ") ); Serial.println(system_get_cpu_freq());
@@ -253,6 +339,21 @@ void setup() {
   Serial.print( F("Vcc: ") ); Serial.println(ESP.getVcc());
   Serial.print( F("MAC Address: ") ); Serial.println(WiFi.macAddress());
   Serial.println();
+
+  Serial.println(F("Settings: "));
+  Serial.print(F("brightness: ")); Serial.println(brightness);
+  Serial.print(F("currentPatternIndex: ")); Serial.println(currentPatternIndex);
+  Serial.print(F("solidColor.r: ")); Serial.println(solidColor.r);
+  Serial.print(F("solidColor.g: ")); Serial.println(solidColor.g);
+  Serial.print(F("solidColor.b: ")); Serial.println(solidColor.b);
+  Serial.print(F("power: ")); Serial.println(power);
+  Serial.print(F("autoplay: ")); Serial.println(autoplay);
+  Serial.print(F("autoplayDuration: ")); Serial.println(autoplayDuration);
+  Serial.print(F("currentPaletteIndex: ")); Serial.println(currentPaletteIndex);
+  Serial.print(F("showClock: ")); Serial.println(showClock);
+  Serial.print(F("clockBackgroundFade: ")); Serial.println(clockBackgroundFade);
+  Serial.println();
+
 
   if (!MYFS.begin()) {
     Serial.println(F("An error occurred when attempting to mount the flash file system"));
@@ -267,6 +368,7 @@ void setup() {
     }
     Serial.printf("\n");
   }
+
 
   // Do a little work to get a unique-ish name. Get the
   // last two bytes of the MAC (HEX'd)":
@@ -283,12 +385,23 @@ void setup() {
   String macIdString = macID;
   macIdString.toUpperCase();
 
-  nameString = "ESP8266-" + macIdString;
+  nameString = NAME_PREFIX + macIdString;
 
-  char nameChar[nameString.length() + 1];
-  memset(nameChar, 0, nameString.length() + 1);
-
-  for (unsigned int i = 0; i < nameString.length(); i++) {
+  // Allocation of variable-sized arrays on the stack is a GCC extension.
+  // Converting this to be compile-time evaluated is possible:
+  //     nameString.length() === strlen(NAME_PREFIX) + strlen(maxIdString)
+  //     strlen(NAME_PREFIX) is compile-time constexpr (but changes per NAME_PREFIX)
+  //     strlen(macIdString) is always 4
+  // Therefore, can use the following to ensure statically evaluated at compile-time,
+  // and avoid use of GCC extensions, with no performance loss.
+  const size_t nameCharCount = static_eval<size_t, constexpr_strlen(NAME_PREFIX) + 4>::value;
+  const size_t nameBufferSize = static_eval<size_t, nameCharCount+1>::value;
+  char nameChar[nameBufferSize];
+  memset(nameChar, 0, nameBufferSize);
+  // Technically, this should *NEVER* need to check the nameString length.
+  // However, I prefer to code defensively, since no static_assert() can detect this.
+  size_t loopUntil = (nameCharCount <= nameString.length() ? nameCharCount : nameString.length());
+  for (size_t i = 0; i < loopUntil; i++) {
     nameChar[i] = nameString.charAt(i);
   }
 
@@ -311,14 +424,26 @@ void setup() {
   httpUpdateServer.setup(&webServer);
 
   webServer.on("/all", HTTP_GET, []() {
-    String json = getFieldsJson(fields, fieldCount);
+    String json = getFieldsJson();
+    webServer.sendHeader("Access-Control-Allow-Origin", "*");
+    webServer.send(200, "application/json", json);
+  });
+  
+  webServer.on("/product", HTTP_GET, []() {
+    String json = "{\"productName\":\"" PRODUCT_FRIENDLY_NAME "\"}";
+    webServer.sendHeader("Access-Control-Allow-Origin", "*");
+    webServer.send(200, "application/json", json);
+  });
+
+  webServer.on("/info", HTTP_GET, []() {
+    String json = getInfoJson();
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     webServer.send(200, "application/json", json);
   });
 
   webServer.on("/fieldValue", HTTP_GET, []() {
     String name = webServer.arg("name");
-    String value = getFieldValue(name, fields, fieldCount);
+    String value = getFieldValue(name);
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     webServer.send(200, "text/json", value);
   });
@@ -326,7 +451,7 @@ void setup() {
   webServer.on("/fieldValue", HTTP_POST, []() {
     String name = webServer.arg("name");
     String value = webServer.arg("value");
-    String newValue = setFieldValue(name, value, fields, fieldCount);
+    String newValue = setFieldValue(name, value);
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     webServer.send(200, "text/json", newValue);
   });
@@ -341,7 +466,6 @@ void setup() {
   webServer.on("/cooling", HTTP_POST, []() {
     String value = webServer.arg("value");
     cooling = value.toInt();
-    writeAndCommitSettings();
     broadcastInt("cooling", cooling);
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     sendInt(cooling);
@@ -350,7 +474,6 @@ void setup() {
   webServer.on("/sparking", HTTP_POST, []() {
     String value = webServer.arg("value");
     sparking = value.toInt();
-    writeAndCommitSettings();
     broadcastInt("sparking", sparking);
     webServer.sendHeader("Access-Control-Allow-Origin", "*");
     sendInt(sparking);
@@ -466,6 +589,30 @@ void setup() {
     sendInt(autoplayDuration);
   });
 
+  webServer.on("/showClock", HTTP_POST, []() {
+    String value = webServer.arg("value");
+    long tmp = value.toInt();
+    if (tmp < 0) {
+      tmp = 0;
+    } else if (tmp > 1) {
+      tmp = 1;
+    }
+    setShowClock(tmp);
+    sendInt(showClock);
+  });
+
+  webServer.on("/clockBackgroundFade", HTTP_POST, []() {
+    String value = webServer.arg("value");
+    long tmp = value.toInt();
+    if (tmp < 0) {
+      tmp = 0;
+    } else if (tmp > 255) {
+      tmp = 255;
+    }
+    setClockBackgroundFade(tmp);
+    sendInt(clockBackgroundFade);
+  });
+
   //list directory
   webServer.on("/list", HTTP_GET, handleFileList);
   //load editor
@@ -496,6 +643,7 @@ void setup() {
   //  Serial.println("Web socket server started");
 
   autoPlayTimeout = millis() + (autoplayDuration * 1000);
+  timeClient.begin();
 }
 
 void sendInt(uint8_t value)
@@ -520,8 +668,15 @@ void broadcastString(String name, String value)
   //  webSocketsServer.broadcastTXT(json);
 }
 
+// TODO: Add board-specific entropy sources
+// e.g., using `uint32_t esp_random()`, if exposed in Arduino ESP32 / ESP8266 BSPs
+// e.g., directly reading from 0x3FF20E44 on ESP8266 (dangerous! no entropy validation, whitening)
+// e.g., directly reading from 0x3FF75144 on ESP32   (dangerous! no entropy validation, whitening)
+// e.g., directly reading from RANDOM_REG32          (dangerous! no entropy validation, whitening)
+// e.g., using a library, such as https://github.com/marvinroger/ESP8266TrueRandom/blob/master/ESP8266TrueRandom.cpp (less dangerous?)
+// e.g., directly reading REG_READ(WDEV_RND_REG)     (dangerous! no check for sufficient clock cycles passed for entropy)
 void loop() {
-  // Add entropy to random number generator; we use a lot of it.
+  // Modify random number generator seed; we use a lot of it.  (Note: this is still deterministic)
   random16_add_entropy(random(65535));
 
   //  webSocketsServer.loop();
@@ -530,9 +685,8 @@ void loop() {
   webServer.handleClient();
   MDNS.update();
 
-  //  timeClient.update();
-
   static bool hasConnected = false;
+
   EVERY_N_SECONDS(1) {
     if (WiFi.status() != WL_CONNECTED) {
       //      Serial.printf("Connecting to %s\n", ssid);
@@ -549,17 +703,17 @@ void loop() {
       Serial.print(" or http://");
       Serial.print(nameString);
       Serial.println(".local in your browser");
+    } else {
+      timeClient.update(); // NTPClient has throttling built-in
     }
   }
 
   checkPingTimer();
-
-  //  handleIrInput();
+  handleIrInput();  // empty function when ENABLE_IR is not defined
 
   if (power == 0) {
-    fill_solid(leds, NUM_LEDS, CRGB::Black);
-    FastLED.show();
-    delay(1000 / FRAMES_PER_SECOND);
+    fill_solid(leds, NUM_PIXELS, CRGB::Black);
+    FastLED.delay(1000 / FRAMES_PER_SECOND); // this function calls FastLED.show() at least once
     return;
   }
 
@@ -587,9 +741,11 @@ void loop() {
   // Call the current pattern function once, updating the 'leds' array
   patterns[currentPatternIndex].pattern();
 
-  FastLED.show();
+  #if IS_FIBONACCI
+  if (showClock) drawAnalogClock();
+  #endif
 
-  // insert a delay to keep the framerate modest
+  // insert a delay to keep the framerate modest ... this is guaranteed to call FastLED.show() at least once
   FastLED.delay(1000 / FRAMES_PER_SECOND);
 }
 
@@ -630,219 +786,15 @@ void loop() {
 //  }
 //}
 
-//void handleIrInput()
-//{
-//  InputCommand command = readCommand();
-//
-//  if (command != InputCommand::None) {
-//    Serial.print("command: ");
-//    Serial.println((int) command);
-//  }
-//
-//  switch (command) {
-//    case InputCommand::Up: {
-//        adjustPattern(true);
-//        break;
-//      }
-//    case InputCommand::Down: {
-//        adjustPattern(false);
-//        break;
-//      }
-//    case InputCommand::Power: {
-//        setPower(power == 0 ? 1 : 0);
-//        break;
-//      }
-//    case InputCommand::BrightnessUp: {
-//        adjustBrightness(true);
-//        break;
-//      }
-//    case InputCommand::BrightnessDown: {
-//        adjustBrightness(false);
-//        break;
-//      }
-//    case InputCommand::PlayMode: { // toggle pause/play
-//        setAutoplay(!autoplay);
-//        break;
-//      }
-//
-//    // pattern buttons
-//
-//    case InputCommand::Pattern1: {
-//        setPattern(0);
-//        break;
-//      }
-//    case InputCommand::Pattern2: {
-//        setPattern(1);
-//        break;
-//      }
-//    case InputCommand::Pattern3: {
-//        setPattern(2);
-//        break;
-//      }
-//    case InputCommand::Pattern4: {
-//        setPattern(3);
-//        break;
-//      }
-//    case InputCommand::Pattern5: {
-//        setPattern(4);
-//        break;
-//      }
-//    case InputCommand::Pattern6: {
-//        setPattern(5);
-//        break;
-//      }
-//    case InputCommand::Pattern7: {
-//        setPattern(6);
-//        break;
-//      }
-//    case InputCommand::Pattern8: {
-//        setPattern(7);
-//        break;
-//      }
-//    case InputCommand::Pattern9: {
-//        setPattern(8);
-//        break;
-//      }
-//    case InputCommand::Pattern10: {
-//        setPattern(9);
-//        break;
-//      }
-//    case InputCommand::Pattern11: {
-//        setPattern(10);
-//        break;
-//      }
-//    case InputCommand::Pattern12: {
-//        setPattern(11);
-//        break;
-//      }
-//
-//    // custom color adjustment buttons
-//
-//    case InputCommand::RedUp: {
-//        solidColor.red += 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::RedDown: {
-//        solidColor.red -= 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::GreenUp: {
-//        solidColor.green += 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::GreenDown: {
-//        solidColor.green -= 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::BlueUp: {
-//        solidColor.blue += 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//    case InputCommand::BlueDown: {
-//        solidColor.blue -= 8;
-//        setSolidColor(solidColor);
-//        break;
-//      }
-//
-//    // color buttons
-//
-//    case InputCommand::Red: {
-//        setSolidColor(CRGB::Red);
-//        break;
-//      }
-//    case InputCommand::RedOrange: {
-//        setSolidColor(CRGB::OrangeRed);
-//        break;
-//      }
-//    case InputCommand::Orange: {
-//        setSolidColor(CRGB::Orange);
-//        break;
-//      }
-//    case InputCommand::YellowOrange: {
-//        setSolidColor(CRGB::Goldenrod);
-//        break;
-//      }
-//    case InputCommand::Yellow: {
-//        setSolidColor(CRGB::Yellow);
-//        break;
-//      }
-//
-//    case InputCommand::Green: {
-//        setSolidColor(CRGB::Green);
-//        break;
-//      }
-//    case InputCommand::Lime: {
-//        setSolidColor(CRGB::Lime);
-//        break;
-//      }
-//    case InputCommand::Aqua: {
-//        setSolidColor(CRGB::Aqua);
-//        break;
-//      }
-//    case InputCommand::Teal: {
-//        setSolidColor(CRGB::Teal);
-//        break;
-//      }
-//    case InputCommand::Navy: {
-//        setSolidColor(CRGB::Navy);
-//        break;
-//      }
-//
-//    case InputCommand::Blue: {
-//        setSolidColor(CRGB::Blue);
-//        break;
-//      }
-//    case InputCommand::RoyalBlue: {
-//        setSolidColor(CRGB::RoyalBlue);
-//        break;
-//      }
-//    case InputCommand::Purple: {
-//        setSolidColor(CRGB::Purple);
-//        break;
-//      }
-//    case InputCommand::Indigo: {
-//        setSolidColor(CRGB::Indigo);
-//        break;
-//      }
-//    case InputCommand::Magenta: {
-//        setSolidColor(CRGB::Magenta);
-//        break;
-//      }
-//
-//    case InputCommand::White: {
-//        setSolidColor(CRGB::White);
-//        break;
-//      }
-//    case InputCommand::Pink: {
-//        setSolidColor(CRGB::Pink);
-//        break;
-//      }
-//    case InputCommand::LightPink: {
-//        setSolidColor(CRGB::LightPink);
-//        break;
-//      }
-//    case InputCommand::BabyBlue: {
-//        setSolidColor(CRGB::CornflowerBlue);
-//        break;
-//      }
-//    case InputCommand::LightBlue: {
-//        setSolidColor(CRGB::LightBlue);
-//        break;
-//      }
-//  }
-//}
+// TODO: Save settings in file system, not EEPROM!
 
+const uint8_t SETTINGS_MAGIC_BYTE = 0x96;
 void readSettings()
 {
   // check for "magic number" so we know settings have been written to EEPROM
   // and it's not just full of random bytes
 
-  if (EEPROM.read(511) != 55) {
+  if (EEPROM.read(511) != SETTINGS_MAGIC_BYTE) {
     return;
   }
 
@@ -882,10 +834,11 @@ void readSettings()
   sparking = EEPROM.read(12);
 
   coolLikeIncandescent = EEPROM.read(13);
-}
 
-void writeAndCommitSettings()
-{
+  showClock = EEPROM.read(14);
+  clockBackgroundFade = EEPROM.read(15);
+}
+void writeAndCommitSettings() {
   EEPROM.write(0, brightness);
   EEPROM.write(1, currentPatternIndex);
   EEPROM.write(2, solidColor.r);
@@ -899,8 +852,10 @@ void writeAndCommitSettings()
   EEPROM.write(10, twinkleDensity);
   EEPROM.write(11, cooling);
   EEPROM.write(12, sparking);
-
-  EEPROM.write(511, 55);
+  EEPROM.write(13, coolLikeIncandescent);
+  EEPROM.write(14, showClock);
+  EEPROM.write(15, clockBackgroundFade);
+  EEPROM.write(511, SETTINGS_MAGIC_BYTE);
   EEPROM.commit();
 }
 
@@ -908,9 +863,8 @@ void setPower(uint8_t value)
 {
   power = value == 0 ? 0 : 1;
   writeAndCommitSettings();
-  broadcastInt("power", power);
+  broadcastInt("power", value);
 }
-
 void setAutoplay(uint8_t value)
 {
   autoplay = value == 0 ? 0 : 1;
@@ -1030,23 +984,23 @@ void setBrightness(uint8_t value)
 
 void strandTest()
 {
-  static uint8_t i = 0;
+  static size_t i = 0;
 
   EVERY_N_SECONDS(1)
   {
     i++;
-    if (i >= NUM_LEDS)
+    if (i >= NUM_PIXELS)
       i = 0;
   }
 
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  fill_solid(leds, NUM_PIXELS, CRGB::Black);
 
   leds[i] = solidColor;
 }
 
 void showSolidColor()
 {
-  fill_solid(leds, NUM_LEDS, solidColor);
+  fill_solid(leds, NUM_PIXELS, solidColor);
 }
 
 // Patterns from FastLED example DemoReel100: https://github.com/FastLED/FastLED/blob/master/examples/DemoReel100/DemoReel100.ino
@@ -1054,7 +1008,7 @@ void showSolidColor()
 void rainbow()
 {
   // FastLED's built-in rainbow generator
-  fill_rainbow( leds, NUM_LEDS, gHue, 255 / NUM_LEDS);
+  fill_rainbow( leds, NUM_PIXELS, gHue, 255 / NUM_PIXELS);
 }
 
 void rainbowWithGlitter()
@@ -1066,14 +1020,14 @@ void rainbowWithGlitter()
 
 void rainbowSolid()
 {
-  fill_solid(leds, NUM_LEDS, CHSV(gHue, 255, 255));
+  fill_solid(leds, NUM_PIXELS, CHSV(gHue, 255, 255));
 }
 
 void confetti()
 {
   // random colored speckles that blink in and fade smoothly
-  fadeToBlackBy( leds, NUM_LEDS, 10);
-  int pos = random16(NUM_LEDS);
+  fadeToBlackBy( leds, NUM_PIXELS, 10);
+  int pos = random16(NUM_PIXELS);
   // leds[pos] += CHSV( gHue + random8(64), 200, 255);
   leds[pos] += ColorFromPalette(palettes[currentPaletteIndex], gHue + random8(64));
 }
@@ -1081,8 +1035,8 @@ void confetti()
 void sinelon()
 {
   // a colored dot sweeping back and forth, with fading trails
-  fadeToBlackBy( leds, NUM_LEDS, 20);
-  int pos = beatsin16(speed, 0, NUM_LEDS);
+  fadeToBlackBy( leds, NUM_PIXELS, 20);
+  int pos = beatsin16(speed, 0, NUM_PIXELS);
   static int prevpos = 0;
   CRGB color = ColorFromPalette(palettes[currentPaletteIndex], gHue, 255);
   if ( pos < prevpos ) {
@@ -1098,7 +1052,7 @@ void bpm()
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
   uint8_t beat = beatsin8( speed, 64, 255);
   CRGBPalette16 palette = palettes[currentPaletteIndex];
-  for ( int i = 0; i < NUM_LEDS; i++) {
+  for ( int i = 0; i < NUM_PIXELS; i++) {
     leds[i] = ColorFromPalette(palette, gHue + (i * 2), beat - gHue + (i * 10));
   }
 }
@@ -1129,10 +1083,10 @@ void juggle()
 
   // Several colored dots, weaving in and out of sync with each other
   curhue = thishue; // Reset the hue values.
-  fadeToBlackBy(leds, NUM_LEDS, faderate);
+  fadeToBlackBy(leds, NUM_PIXELS, faderate);
   for ( int i = 0; i < numdots; i++) {
     //beat16 is a FastLED 3.1 function
-    leds[beatsin16(basebeat + i + numdots, 0, NUM_LEDS)] += CHSV(gHue + curhue, thissat, thisbright);
+    leds[beatsin16(basebeat + i + numdots, 0, NUM_PIXELS)] += CHSV(gHue + curhue, thissat, thisbright);
     curhue += hueinc;
   }
 }
@@ -1150,7 +1104,7 @@ void water()
 // Pride2015 by Mark Kriegsman: https://gist.github.com/kriegsman/964de772d64c502760e5
 // This function draws rainbows with an ever-changing,
 // widely-varying set of parameters.
-void pride()
+void fillWithPride(bool useFibonacciOrder)
 {
   static uint16_t sPseudotime = 0;
   static uint16_t sLastMillis = 0;
@@ -1171,7 +1125,7 @@ void pride()
   sHue16 += deltams * beatsin88( 400, 5, 9);
   uint16_t brightnesstheta16 = sPseudotime;
 
-  for ( uint16_t i = 0 ; i < NUM_LEDS; i++) {
+  for ( uint16_t i = 0 ; i < NUM_PIXELS; i++) {
     hue16 += hueinc16;
     uint8_t hue8 = hue16 / 256;
 
@@ -1185,40 +1139,91 @@ void pride()
     CRGB newcolor = CHSV( hue8, sat8, bri8);
 
     uint16_t pixelnumber = i;
-    pixelnumber = (NUM_LEDS - 1) - pixelnumber;
+
+#if IS_FIBONACCI
+    if (useFibonacciOrder) pixelnumber = fibonacciToPhysical[i];
+#else
+    (void)useFibonacciOrder; // unused parameter
+#endif
+
+    pixelnumber = (NUM_PIXELS - 1) - pixelnumber;
 
     nblend( leds[pixelnumber], newcolor, 64);
   }
 }
+void pride() {
+  fillWithPride(false);
+}
+#if IS_FIBONACCI // prideFibonacci() uses fibonacciToPhysical
+void prideFibonacci() {
+  fillWithPride(true);
+}
+#endif
 
-void radialPaletteShift()
+void fillRadialPaletteShift(bool useFibonacciOrder)
 {
-  for (uint16_t i = 0; i < NUM_LEDS; i++) {
-    // leds[i] = ColorFromPalette( gCurrentPalette, gHue + sin8(i*16), brightness);
-    leds[i] = ColorFromPalette(gCurrentPalette, i + gHue, 255, LINEARBLEND);
+  for (uint16_t i = 0; i < NUM_PIXELS; i++) {
+    #if IS_FIBONACCI
+      uint16_t idx = useFibonacciOrder ? fibonacciToPhysical[i] : i;
+    #else
+      (void)useFibonacciOrder;
+      uint16_t idx = i;
+    #endif
+    leds[idx] = ColorFromPalette(gCurrentPalette, i + gHue, 255, LINEARBLEND);
   }
 }
+void fillRadialPaletteShiftOutward(bool useFibonacciOrder)
+{
+  for (uint16_t i = 0; i < NUM_PIXELS; i++) {
+    #if IS_FIBONACCI
+      uint16_t idx = useFibonacciOrder ? fibonacciToPhysical[i] : i;
+    #else
+      (void)useFibonacciOrder;
+      uint16_t idx = i;
+    #endif
+    leds[idx] = ColorFromPalette(gCurrentPalette, i - gHue, 255, LINEARBLEND);
+  }
+}
+// TODO: define function radialPaletteShiftFibonacci()
+void radialPaletteShift()
+{
+  #if IS_FIBONACCI
+    fillRadialPaletteShift(true);
+  #else
+    fillRadialPaletteShift(false);
+  #endif
+}
+// TODO: define function radialPaletteShiftOutwardFibonacci(), and update to call corresponding function
+void radialPaletteShiftOutward()
+{
+  #if IS_FIBONACCI
+    fillRadialPaletteShiftOutward(true);
+  #else
+    fillRadialPaletteShiftOutward(false);
+  #endif
+}
+
 
 // based on FastLED example Fire2012WithPalette: https://github.com/FastLED/FastLED/blob/master/examples/Fire2012WithPalette/Fire2012WithPalette.ino
-void heatMap(CRGBPalette16 palette, bool up)
+void heatMap(const CRGBPalette16& palette, bool up)
 {
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  fill_solid(leds, NUM_PIXELS, CRGB::Black);
 
-  // Add entropy to random number generator; we use a lot of it.
+  // Modify random number generator seed; we use a lot of it.  (Note: this is still deterministic)
   random16_add_entropy(random(256));
 
   // Array of temperature readings at each simulation cell
-  static byte heat[NUM_LEDS];
+  static byte heat[NUM_PIXELS];
 
   byte colorindex;
 
   // Step 1.  Cool down every cell a little
-  for ( uint16_t i = 0; i < NUM_LEDS; i++) {
-    heat[i] = qsub8( heat[i],  random8(0, ((cooling * 10) / NUM_LEDS) + 2));
+  for ( uint16_t i = 0; i < NUM_PIXELS; i++) {
+    heat[i] = qsub8( heat[i],  random8(0, ((cooling * 10) / NUM_PIXELS) + 2));
   }
 
   // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-  for ( uint16_t k = NUM_LEDS - 1; k >= 2; k--) {
+  for ( uint16_t k = NUM_PIXELS - 1; k >= 2; k--) {
     heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
   }
 
@@ -1229,7 +1234,7 @@ void heatMap(CRGBPalette16 palette, bool up)
   }
 
   // Step 4.  Map from heat cells to LED colors
-  for ( uint16_t j = 0; j < NUM_LEDS; j++) {
+  for ( uint16_t j = 0; j < NUM_PIXELS; j++) {
     // Scale the heat value from 0-255 down to 0-240
     // for best results with color palettes.
     colorindex = scale8(heat[j], 190);
@@ -1240,7 +1245,7 @@ void heatMap(CRGBPalette16 palette, bool up)
       leds[j] = color;
     }
     else {
-      leds[(NUM_LEDS - 1) - j] = color;
+      leds[(NUM_PIXELS - 1) - j] = color;
     }
   }
 }
@@ -1248,17 +1253,11 @@ void heatMap(CRGBPalette16 palette, bool up)
 void addGlitter( uint8_t chanceOfGlitter)
 {
   if ( random8() < chanceOfGlitter) {
-    leds[ random16(NUM_LEDS) ] += CRGB::White;
+    leds[ random16(NUM_PIXELS) ] += CRGB::White;
   }
 }
 
 ///////////////////////////////////////////////////////////////////////
-
-// Forward declarations of an array of cpt-city gradient palettes, and
-// a count of how many there are.  The actual color palette definitions
-// are at the bottom of this file.
-extern const TProgmemRGBGradientPalettePtr gGradientPalettes[];
-extern const uint8_t gGradientPaletteCount;
 
 uint8_t beatsaw8( accum88 beats_per_minute, uint8_t lowest = 0, uint8_t highest = 255,
                   uint32_t timebase = 0, uint8_t phase_offset = 0)
@@ -1271,15 +1270,11 @@ uint8_t beatsaw8( accum88 beats_per_minute, uint8_t lowest = 0, uint8_t highest 
   return result;
 }
 
-void colorWaves()
-{
-  colorwaves( leds, NUM_LEDS, gCurrentPalette);
-}
 
 // ColorWavesWithPalettes by Mark Kriegsman: https://gist.github.com/kriegsman/8281905786e8b2632aeb
 // This function draws color waves with an ever-changing,
 // widely-varying set of parameters, using a color palette.
-void colorwaves( CRGB* ledarray, uint16_t numleds, CRGBPalette16& palette)
+void fillWithColorwaves( CRGB* ledarray, uint16_t numleds, const CRGBPalette16& palette, bool useFibonacciOrder)
 {
   static uint16_t sPseudotime = 0;
   static uint16_t sLastMillis = 0;
@@ -1324,11 +1319,27 @@ void colorwaves( CRGB* ledarray, uint16_t numleds, CRGBPalette16& palette)
     CRGB newcolor = ColorFromPalette( palette, index, bri8);
 
     uint16_t pixelnumber = i;
+#if IS_FIBONACCI
+    if (useFibonacciOrder) pixelnumber = fibonacciToPhysical[i];
+#else
+    (void)useFibonacciOrder;
+#endif
     pixelnumber = (numleds - 1) - pixelnumber;
 
     nblend( ledarray[pixelnumber], newcolor, 128);
   }
 }
+
+void colorWaves()
+{
+  fillWithColorwaves( leds, NUM_PIXELS, gCurrentPalette, false);
+}
+#if IS_FIBONACCI // colorWavesFibonacci() uses fibonacciToPhysical
+void colorWavesFibonacci()
+{
+  fillWithColorwaves( leds, NUM_PIXELS, gCurrentPalette, true);
+}
+#endif
 
 // Alternate rendering function just scrolls the current palette
 // across the defined LED strip.
@@ -1336,5 +1347,192 @@ void palettetest( CRGB* ledarray, uint16_t numleds, const CRGBPalette16& gCurren
 {
   static uint8_t startindex = 0;
   startindex--;
-  fill_palette( ledarray, numleds, startindex, (256 / NUM_LEDS) + 1, gCurrentPalette, 255, LINEARBLEND);
+  fill_palette( ledarray, numleds, startindex, (256 / NUM_PIXELS) + 1, gCurrentPalette, 255, LINEARBLEND);
 }
+
+#if IS_FIBONACCI // swirlFibonacci() uses physicalToFibonacci and angles
+void swirlFibonacci() {
+
+  const float z = 2.5; // zoom (2.0)
+  const float w = 3.0; // number of wings (3)
+  const float p_min = 0.1; const float p_max = 2.0; // puff up (default: 1.0)
+  const float d_min = 0.1; const float d_max = 2.0; // dent (default: 0.5)
+  const float s_min = -3.0; const float s_max = 2.0; // swirl (default: -2.0)
+  const float g_min = 0.1; const float g_max = 0.5; // glow (default: 0.2)
+  const float b = 240; // inverse brightness (240)
+
+  const float p = p_min + beatsin88(13*speed) / (float)UINT16_MAX * (p_max - p_min);
+  const float d = d_min + beatsin88(17*speed) / (float)UINT16_MAX * (d_max - d_min);
+  const float s = s_min + beatsin88(7*speed) / (float)UINT16_MAX * (s_max - s_min);
+  const float g = g_min + beatsin88(27*speed) / (float)UINT16_MAX * (g_max - g_min);
+
+  CRGBPalette16 palette( gGradientPalettes[1] ); // es_rivendell_15_gp
+
+  for (uint16_t i = 0; i < NUM_PIXELS; i++) {
+    float r = physicalToFibonacci[i] / 256.0 * z;
+    float a = (angles[i] + (beat88(3*speed)>>3)) / 256.0 * TWO_PI;
+    float v = r - p + d * sin(w * a + s * r * r);
+    float c = 255 - b * pow(fabs(v), g);
+    if (c < 0) c = 0;
+    else if (c > 255) c = 255;
+
+    leds[i] = ColorFromPalette(palette, (uint8_t)c);
+  }
+}
+#endif
+
+#if IS_FIBONACCI // fireFibonacci() uses coordsX/coordsY
+// TODO: combine with normal fire effect
+void fireFibonacci() {
+  for (uint16_t i = 0; i < NUM_PIXELS; i++) {
+    uint16_t x = coordsX[i];
+    uint16_t y = coordsY[i];
+
+    uint8_t n = qsub8( inoise8((x << 2) - beat88(speed << 2), (y << 2)), x );
+
+    leds[i] = ColorFromPalette(HeatColors_p, n);
+  }
+}
+#endif
+
+#if IS_FIBONACCI // waterFibonacci() uses coordsX/coordsY
+// TODO: combine with normal water effect
+void waterFibonacci() {
+  for (uint16_t i = 0; i < NUM_PIXELS; i++) {
+    uint16_t x = coordsX[i];
+    uint16_t y = coordsY[i];
+
+    uint8_t n = inoise8((x << 2) + beat88(speed << 2), (y << 4));
+
+    leds[i] = ColorFromPalette(IceColors_p, n);
+  }
+}
+#endif
+
+#if IS_FIBONACCI // emitterFibonacci() uses angle, antialiasPixelAR()
+/**
+ * Emits arcs of color spreading out from the center to the edge of the disc.
+ */
+void emitterFibonacci() {
+  static CRGB ledBuffer[NUM_PIXELS]; // buffer for better fade behavior
+  const uint8_t dAngle = 32; // angular span of the traces
+  const uint8_t dRadius = 12; // radial width of the traces
+  const uint8_t vSpeed = 16; // max speed variation
+
+
+  static const uint8_t eCount = 7; // Number of simultanious traces
+  static uint8_t angle[eCount]; // individual trace angles
+  static uint16_t timeOffset[eCount]; // individual offsets from beat8() function
+  static uint8_t speedOffset[eCount]; // individual speed offsets limited by vSpeed
+  static uint8_t sparkIdx = 0; // randomizer cycles through traces to spark new ones
+
+  // spark new trace
+  EVERY_N_MILLIS(20) {
+    if (random8(17) <= (speed >> 4)) { // increase change rate for higher speeds
+      angle[sparkIdx] = random8();
+      speedOffset[sparkIdx] = random8(vSpeed); // individual speed variation
+      timeOffset[sparkIdx] = beat8(qadd8(speed,speedOffset[sparkIdx]));
+      sparkIdx = addmod8(sparkIdx, 1, eCount); // continue randomizer at next spark
+    }
+  }
+
+  // fade traces
+  fadeToBlackBy( ledBuffer, NUM_PIXELS, 6 + (speed >> 3));
+
+  // draw traces
+  for (uint8_t e = 0; e < eCount; e++) {
+    uint8_t startRadius = sub8(beat8(qadd8(speed, speedOffset[e])), timeOffset[e]);
+    uint8_t endRadius = add8(startRadius, dRadius + (speed>>5)); // increase radial width for higher speeds
+    antialiasPixelAR(angle[e], dAngle, startRadius, endRadius, ColorFromPalette(gCurrentPalette, startRadius), ledBuffer);
+  }
+
+  // copy buffer to actual strip
+  memcpy(leds, ledBuffer, sizeof(ledBuffer[0])*NUM_PIXELS);
+}
+#endif
+
+void wheel() {
+  for (uint16_t i = 0; i < NUM_PIXELS; i++) {
+    uint8_t j = beat8(speed);
+    uint8_t hue = i + j;
+    leds[i] = CHSV(hue, 255, 255);
+  }
+}
+
+
+#if (PARALLEL_OUTPUT_CHANNELS > 1)
+
+void multi_test() {
+  static bool debug = true;
+  const uint8_t step = (256 / PARALLEL_OUTPUT_CHANNELS);
+
+  if (debug) {
+    Serial.print("step: ");
+    Serial.println(step);
+  }
+
+  static_assert(PARALLEL_OUTPUT_CHANNELS <= 6, "");
+  for (uint8_t strip = 0; strip < PARALLEL_OUTPUT_CHANNELS; strip++) {
+    uint16_t pixelOffset;
+    uint16_t pixelCount;
+    if (strip == 0) {
+      pixelOffset = LedOffset<1>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<1>();  // uses one-based indices... sigh.
+    }
+#if (PARALLEL_OUTPUT_CHANNELS >= 2)
+    else if (strip == 1) {
+      pixelOffset = LedOffset<2>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<2>();  // uses one-based indices... sigh.
+    }
+#endif    
+#if (PARALLEL_OUTPUT_CHANNELS >= 3)
+    else if (strip == 2) {
+      pixelOffset = LedOffset<3>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<3>();  // uses one-based indices... sigh.
+    }
+#endif
+#if (PARALLEL_OUTPUT_CHANNELS >= 4)
+    else if (strip == 3) {
+      pixelOffset = LedOffset<4>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<4>();  // uses one-based indices... sigh.
+    }
+#endif
+#if (PARALLEL_OUTPUT_CHANNELS > 5)
+    else if (strip == 4) {
+      pixelOffset = LedOffset<5>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<5>();  // uses one-based indices... sigh.
+    }
+#endif
+#if (PARALLEL_OUTPUT_CHANNELS > 6)
+    else if (strip == 5) {
+      pixelOffset = LedOffset<6>(); // uses one-based indices... sigh.
+      pixelCount  = LedCount<6>();  // uses one-based indices... sigh. 
+    }
+#endif
+    else {
+      break;
+    }
+
+    uint8_t hue = gHue + strip * step;
+    CHSV c = CHSV(hue, 255, 255);
+    
+    if (debug) {
+      Serial.print("hue: ");
+      Serial.println(hue);
+    }
+
+    for (uint16_t i = 0; i < pixelCount; i++) {
+      uint16_t j = i + pixelOffset;
+      leds[j] = c;
+
+      if (debug) {
+        Serial.print("j: ");
+        Serial.println(j);
+      }
+    }
+  }
+
+  debug = false;
+}
+#endif
+

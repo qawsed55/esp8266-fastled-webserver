@@ -1,3 +1,5 @@
+#include "common.h"
+
 // Pride2015 by Mark Kriegsman: https://gist.github.com/kriegsman/964de772d64c502760e5
 // This function draws rainbows with an ever-changing,
 // widely-varying set of parameters.
@@ -28,7 +30,7 @@ uint8_t sHueBpm = 2;
 uint8_t sHueMin = 5;
 uint8_t sHueMax = 9;
 
-void pridePlayground()
+void fillWithPridePlayground(bool useFibonacciOrder)
 {
   static uint16_t sPseudotime = 0;
   static uint16_t sLastMillis = 0;
@@ -51,7 +53,7 @@ void pridePlayground()
   sHue16 += deltams * beatsin88(sHueBpm * 256, sHueMin, sHueMax);
   uint16_t brightnesstheta16 = sPseudotime;
 
-  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  for (uint16_t i = 0; i < NUM_PIXELS; i++)
   {
     hue16 += hueinc16;
     uint8_t hue8 = hue16 / 256;
@@ -66,9 +68,24 @@ void pridePlayground()
     CRGB newcolor = CHSV(hue8, sat8, bri8);
 
     uint16_t pixelnumber = i;
+#if IS_FIBONACCI
+    if (useFibonacciOrder) pixelnumber = fibonacciToPhysical[i];
+#else
+    (void)useFibonacciOrder;
+#endif
 
-    pixelnumber = (NUM_LEDS - 1) - pixelnumber;
+    pixelnumber = (NUM_PIXELS - 1) - pixelnumber;
 
     nblend(leds[pixelnumber], newcolor, 64);
   }
 }
+
+void pridePlayground() {
+  fillWithPridePlayground(false);
+}
+
+#if IS_FIBONACCI
+void pridePlaygroundFibonacci() {
+  fillWithPridePlayground(true);
+}
+#endif
