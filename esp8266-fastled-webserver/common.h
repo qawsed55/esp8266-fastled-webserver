@@ -31,10 +31,6 @@
   #include <FastLED.h>
   FASTLED_USING_NAMESPACE
 
-  extern "C" {
-  #include "user_interface.h"
-  }
-
   #include <LittleFS.h>
   #define MYFS LittleFS
 
