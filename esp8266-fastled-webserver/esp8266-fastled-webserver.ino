@@ -110,6 +110,9 @@ const PatternAndName patterns[] = {
 #endif
 
   { colorWaves,             "Color Waves" },
+#if IS_FIBONACCI
+  { colorWavesFibonacci,               "Color Waves Fibonacci" },
+#endif
 
 #if HAS_COORDINATE_MAP // really a wrong name... and likely doing way more computation than necessary
   { radarSweepPalette, "Radar Sweep Palette" },
@@ -132,8 +135,6 @@ const PatternAndName patterns[] = {
 #endif
 
 #if IS_FIBONACCI
-  { colorWavesFibonacci,               "Color Waves Fibonacci" },
-
   { pridePlayground,                   "Pride Playground" },
   { pridePlaygroundFibonacci,          "Pride Playground Fibonacci" },
 
