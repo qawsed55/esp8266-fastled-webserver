@@ -24,18 +24,21 @@
 // When compiling from Arduino, you can edit this file.
 // When compiling from PlatformIO, this is a reference for compiler flags.
 
-#define PRODUCT_DEFAULT
-// #define PRODUCT_FIBONACCI512
-// #define PRODUCT_FIBONACCI256
-// #define PRODUCT_FIBONACCI128
-// #define PRODUCT_FIBONACCI64_FULL  // 86mm, WS2812B-5050, ~60mA/pixel
-// #define PRODUCT_FIBONACCI64_MINI  // 64mm, WS2812B-3535, ~60mA/pixel
-// #define PRODUCT_FIBONACCI64_MICRO // 40mm, WS2812C-2020,  ~5mA/pixel
-// #define PRODUCT_FIBONACCI64_NANO  // 33mm, SK6805-EC15,   ~5mA/pixel
-// #define PRODUCT_FIBONACCI32
-// #define PRODUCT_KRAKEN64
-// #define PRODUCT_ESP8266_THING // aka parallel (6-output)
-// #define PRODUCT_1628_RINGS
+#if !defined(BUILDING_USING_PLATFORMIO)
+    #define PRODUCT_DEFAULT
+    // #define PRODUCT_FIBONACCI512
+    // #define PRODUCT_FIBONACCI256
+    // #define PRODUCT_FIBONACCI128
+    // #define PRODUCT_FIBONACCI64_FULL  // 86mm, WS2812B-5050, ~60mA/pixel
+    // #define PRODUCT_FIBONACCI64_MINI  // 64mm, WS2812B-3535, ~60mA/pixel
+    // #define PRODUCT_FIBONACCI64_MICRO // 40mm, WS2812C-2020,  ~5mA/pixel
+    // #define PRODUCT_FIBONACCI64_NANO  // 33mm, SK6805-EC15,   ~5mA/pixel
+    // #define PRODUCT_FIBONACCI32
+    // #define PRODUCT_KRAKEN64
+    // #define PRODUCT_ESP8266_THING // aka parallel (6-output)
+    // #define PRODUCT_1628_RINGS
+#endif /// !defined(BUILDING_USING_PLATFORMIO)
+
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Additional configuration options ... defaults shown
