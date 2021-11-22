@@ -65,6 +65,9 @@ The app depends on the following libraries. They must either be downloaded from 
 * [FastLED](https://github.com/FastLED/FastLED)
 * [IRremoteESP8266](https://github.com/sebastienwarin/IRremoteESP8266)
 * [Arduino WebSockets](https://github.com/Links2004/arduinoWebSockets)
+* [Arduino JSON](https://arduinojson.org)
+* [lolrol LittleFS](https://github.com/lorol/LITTLEFS) -- (integrated into ESP32 core v2, which is not used here yet)
+
 
 Download the app code from GitHub using the green Clone or Download button from [the GitHub project main page](https://github.com/jasoncoon/esp8266-fastled-webserver) and click Download ZIP. Decompress the ZIP file in your Arduino sketch folder.
 

@@ -27,6 +27,10 @@
 #include "config.h"
 
 #if 1 // external libraries
+  #define ARDUINOJSON_DECODE_UNICODE 0 // don't need to decode Unicode to UTF-8
+  #define ARDUINOJSON_USE_LONG_LONG 1  // storing uint32_t requires this flag
+  #include "ArduinoJson.h"
+
   #define FASTLED_INTERNAL // no other way to suppress build warnings
   #include <FastLED.h>
   FASTLED_USING_NAMESPACE
