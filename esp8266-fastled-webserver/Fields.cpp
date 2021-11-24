@@ -24,6 +24,7 @@ const String ColorFieldType = "Color";
 const String SectionFieldType = "Section";
 const String StringFieldType = "String";
 const String LabelFieldType = "Label";
+const String UtcOffsetIndexFieldType = "UtcOffsetIndex";
 
 uint8_t power = 1;
 uint8_t brightness = brightnessMap[brightnessIndex];
@@ -150,6 +151,28 @@ String getCoolLikeIncandescent() {
 
 String getName() {
   return nameString;
+}
+String getUtcOffsetIndex() {
+  return String(utcOffsetIndex);
+}
+
+String setUtcOffsetIndex(uint8_t value)
+{
+  utcOffsetIndex = value;
+  if (utcOffsetIndex > 104) utcOffsetIndex = 104;
+  int utcOffsetInHours = map(utcOffsetIndex, 0, 104, -12, 14);
+  utcOffsetInSeconds = utcOffsetInHours * 60 * 60;
+  Serial.print(F("utcOffsetIndex: ")); Serial.println(utcOffsetIndex);
+  Serial.print(F("utcOffsetInHours: ")); Serial.println(utcOffsetInHours);
+  Serial.print(F("utcOffsetInSeconds: ")); Serial.println(utcOffsetInSeconds);
+  timeClient.setTimeOffset(utcOffsetInSeconds);
+  writeAndCommitSettings();
+  return String(utcOffsetIndex);
+}
+
+String setUtcOffsetIndexString(String value)
+{
+  return setUtcOffsetIndex(value.toInt());
 }
 
 // Pride Playground fields
@@ -359,7 +382,7 @@ String getFieldsJson(const Field (&fields)[N]) {
       }
     }
 
-    if (field.type == NumberFieldType) {
+    if (field.type == NumberFieldType || field.type == UtcOffsetIndexFieldType) {
       json += ",\"min\":" + String(field.min);
       json += ",\"max\":" + String(field.max);
     }
@@ -399,9 +422,10 @@ const Field fields[] = {
     {"autoplayDuration", "Autoplay Duration", NumberFieldType,  0, 255, getAutoplayDuration, nullptr, nullptr},
 
     //--------------------------------------------------------------------------------------------------------
-    {"clock",               "Clock",           SectionFieldType, 0,   0,  nullptr,                nullptr, nullptr},	
-    {"showClock",           "Show Clock",      BooleanFieldType, 0,   1,  getShowClock,           nullptr, nullptr},	
-    {"clockBackgroundFade", "Background Fade", NumberFieldType,  0, 255,  getClockBackgroundFade, nullptr, nullptr},
+    {"clock",               "Clock",           SectionFieldType,        0,   0, nullptr,                nullptr, nullptr},	
+    {"showClock",           "Show Clock",      BooleanFieldType,        0,   1, getShowClock,           nullptr, nullptr},	
+    {"clockBackgroundFade", "Background Fade", NumberFieldType,         0, 255, getClockBackgroundFade, nullptr, nullptr},
+    {"utcOffsetIndex",      "UTC Offset",      UtcOffsetIndexFieldType, 0, 104, getUtcOffsetIndex,      nullptr, setUtcOffsetIndexString},
 
     //--------------------------------------------------------------------------------------------------------
     {"solidColorSection", "Solid Color", SectionFieldType, 0,   0, nullptr,       nullptr, nullptr},

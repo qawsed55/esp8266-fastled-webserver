@@ -23,9 +23,11 @@ ESP8266WebServer webServer(80);
 //WebSocketsServer webSocketsServer = WebSocketsServer(81);
 ESP8266HTTPUpdateServer httpUpdateServer;
 
+int utcOffsetInSeconds = -6 * 60 * 60;
+
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", UTC_OFFSET_IN_SECONDS, NTP_UPDATE_THROTTLE_MILLLISECONDS);
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds, NTP_UPDATE_THROTTLE_MILLLISECONDS);
 
 String nameString;
 
@@ -68,7 +70,8 @@ uint8_t autoplayDuration = 10;
 unsigned long autoPlayTimeout = 0;
 
 uint8_t showClock = 0;
-uint8_t clockBackgroundFade = 240;
+uint8_t clockBackgroundFade = 160;
+uint8_t utcOffsetIndex = 24; // map(-6, -12, 14, 0, 104); -12 to 14 in 15 minute increments, mapped to 0 to 104
 
 uint8_t currentPaletteIndex = 0;
 
@@ -114,26 +117,6 @@ const PatternAndName patterns[] = {
   { colorWavesFibonacci,               "Color Waves Fibonacci" },
 #endif
 
-#if HAS_COORDINATE_MAP // really a wrong name... and likely doing way more computation than necessary
-  { radarSweepPalette, "Radar Sweep Palette" },
-#endif
-#if HAS_POLAR_COORDS // really a wrong name... and likely doing way more computation than necessary
-  // noise patterns (Polar variations)
-  { gradientPalettePolarNoise,         "Gradient Palette Polar Noise" },
-  { palettePolarNoise,                 "Palette Polar Noise" },
-  { firePolarNoise,                    "Fire Polar Noise" },
-  { firePolarNoise2,                   "Fire Polar Noise 2" },
-  { lavaPolarNoise,                    "Lava Polar Noise" },
-  { rainbowPolarNoise,                 "Rainbow Polar Noise" },
-  { rainbowStripePolarNoise,           "Rainbow Stripe Polar Noise" },
-  { partyPolarNoise,                   "Party Polar Noise" },
-  { forestPolarNoise,                  "Forest Polar Noise" },
-  { cloudPolarNoise,                   "Cloud Polar Noise" },
-  { oceanPolarNoise,                   "Ocean Polar Noise" },
-  { blackAndWhitePolarNoise,           "Black & White Polar Noise" },
-  { blackAndBluePolarNoise,            "Black & Blue Polar Noise" },
-#endif
-
 #if IS_FIBONACCI
   { pridePlayground,                   "Pride Playground" },
   { pridePlaygroundFibonacci,          "Pride Playground Fibonacci" },
@@ -157,6 +140,10 @@ const PatternAndName patterns[] = {
   { pacifica_fibonacci_loop,           "Pacifica Fibonacci" },
 #endif
 
+#if HAS_COORDINATE_MAP // really a wrong name... and likely doing way more computation than necessary
+  { radarSweepPalette, "Radar Sweep Palette" },
+#endif
+
 #if HAS_COORDINATE_MAP
   // matrix patterns
   { anglePalette,                      "Angle Palette" },
@@ -170,6 +157,23 @@ const PatternAndName patterns[] = {
   { xGradientPalette,                  "X Axis Gradient Palette" },
   { yGradientPalette,                  "Y Axis Gradient Palette" },
   { xyGradientPalette,                 "XY Axis Gradient Palette" },
+#endif
+
+#if HAS_POLAR_COORDS // really a wrong name... and likely doing way more computation than necessary
+  // noise patterns (Polar variations)
+  { gradientPalettePolarNoise,         "Gradient Palette Polar Noise" },
+  { palettePolarNoise,                 "Palette Polar Noise" },
+  { firePolarNoise,                    "Fire Polar Noise" },
+  { firePolarNoise2,                   "Fire Polar Noise 2" },
+  { lavaPolarNoise,                    "Lava Polar Noise" },
+  { rainbowPolarNoise,                 "Rainbow Polar Noise" },
+  { rainbowStripePolarNoise,           "Rainbow Stripe Polar Noise" },
+  { partyPolarNoise,                   "Party Polar Noise" },
+  { forestPolarNoise,                  "Forest Polar Noise" },
+  { cloudPolarNoise,                   "Cloud Polar Noise" },
+  { oceanPolarNoise,                   "Ocean Polar Noise" },
+  { blackAndWhitePolarNoise,           "Black & White Polar Noise" },
+  { blackAndBluePolarNoise,            "Black & Blue Polar Noise" },
 #endif
 
 #if HAS_COORDINATE_MAP
@@ -353,6 +357,8 @@ void setup() {
   Serial.print(F("currentPaletteIndex: ")); Serial.println(currentPaletteIndex);
   Serial.print(F("showClock: ")); Serial.println(showClock);
   Serial.print(F("clockBackgroundFade: ")); Serial.println(clockBackgroundFade);
+  Serial.print(F("utcOffsetIndex: ")); Serial.println(utcOffsetIndex);
+  Serial.print(F("utcOffsetInSeconds: ")); Serial.println(utcOffsetInSeconds);
   Serial.println();
 
 
@@ -838,7 +844,10 @@ void readSettings()
 
   showClock = EEPROM.read(14);
   clockBackgroundFade = EEPROM.read(15);
+  utcOffsetIndex = EEPROM.read(16);
+  setUtcOffsetIndex(utcOffsetIndex);
 }
+
 void writeAndCommitSettings() {
   EEPROM.write(0, brightness);
   EEPROM.write(1, currentPatternIndex);
@@ -856,6 +865,7 @@ void writeAndCommitSettings() {
   EEPROM.write(13, coolLikeIncandescent);
   EEPROM.write(14, showClock);
   EEPROM.write(15, clockBackgroundFade);
+  EEPROM.write(16, utcOffsetIndex);
   EEPROM.write(511, SETTINGS_MAGIC_BYTE);
   EEPROM.commit();
 }
@@ -1389,7 +1399,7 @@ void fireFibonacci() {
     uint16_t x = coordsX[i];
     uint16_t y = coordsY[i];
 
-    uint8_t n = qsub8( inoise8((x << 2) - beat88(speed << 2), (y << 2)), x );
+    uint8_t n = qsub8(inoise8((y << 2) - beat88(speed << 2), (x << 2)), y);
 
     leds[i] = ColorFromPalette(HeatColors_p, n);
   }
@@ -1403,7 +1413,7 @@ void waterFibonacci() {
     uint16_t x = coordsX[i];
     uint16_t y = coordsY[i];
 
-    uint8_t n = inoise8((x << 2) + beat88(speed << 2), (y << 4));
+    uint8_t n = inoise8((y << 2) + beat88(speed << 2), (x << 4));
 
     leds[i] = ColorFromPalette(IceColors_p, n);
   }

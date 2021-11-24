@@ -442,9 +442,9 @@ void drawAnalogClock() {
     float minute = timeClient.getMinutes() + (second / 60.0);
     float hour   = timeClient.getHours()   + (minute / 60.0);
 
-    hourAngle   = 256u - hour   * degreesPerHour;
-    minuteAngle = 256u - minute * degreesPerMinute;
-    secondAngle = 256u - second * degreesPerSecond;
+    hourAngle   = 64u - hour   * degreesPerHour;
+    minuteAngle = 64u - minute * degreesPerMinute;
+    secondAngle = 64u - second * degreesPerSecond;
   }
 
   // although can update angles once every 100ms, have to perform fade & overlay with each cycle
@@ -473,42 +473,42 @@ void drawSpiralAnalogClock(uint8_t step_h, uint8_t step_m, uint8_t step_s) {
     float minute = timeClient.getMinutes() + (second / 60.0);
     float hour   = timeClient.getHours()   + (minute / 60.0);
 
-    hourAngle   = 256u - hour   * degreesPerHour;
-    minuteAngle = 256u - minute * degreesPerMinute;
-    secondAngle = 256u - second * degreesPerSecond;
+    hourAngle   = 64u - hour   * degreesPerHour;
+    minuteAngle = 64u - minute * degreesPerMinute;
+    secondAngle = 64u - second * degreesPerSecond;
   }
 
-  drawSpiralLine(secondAngle, step_s, CRGB(0, 0, 2));
-  drawSpiralLine(minuteAngle, step_m, CRGB(0, 2, 0));
-  drawSpiralLine(hourAngle,   step_h, CRGB(2, 0, 0));
+  drawSpiralLine(secondAngle, step_s, CRGB::Blue );
+  drawSpiralLine(minuteAngle, step_m, CRGB::Green);
+  drawSpiralLine(hourAngle,   step_h, CRGB::Red  );
 }
 void drawSpiralAnalogClock(uint8_t step) {
   drawSpiralAnalogClock(step, step, step);
 }
 void drawSpiralAnalogClock13() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(13, 13, 13);
+  drawSpiralAnalogClock(13);
 }
 void drawSpiralAnalogClock21() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(21, 21, 21);
+  drawSpiralAnalogClock(21);
 }
 void drawSpiralAnalogClock34() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(34, 34, 34);
+  drawSpiralAnalogClock(34);
 }
 void drawSpiralAnalogClock55() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(55, 55, 55);
+  drawSpiralAnalogClock(55);
 }
 void drawSpiralAnalogClock89() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(89, 89, 89);
+  drawSpiralAnalogClock(89);
 }
 void drawSpiralAnalogClock21and34() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(21, 21, 21);
-  drawSpiralAnalogClock(34, 34, 34);
+  drawSpiralAnalogClock(21);
+  drawSpiralAnalogClock(34);
 }
 void drawSpiralAnalogClock13_21_and_34() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
