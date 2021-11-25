@@ -86,32 +86,8 @@ String getPattern() {
   return String(currentPatternIndex);
 }
 
-String getPatterns() {
-  String json = "";
-
-  for (uint8_t i = 0; i < patternCount; i++) {
-    json += "\"" + patterns[i].name + "\"";
-    if (i < patternCount - 1)
-      json += ",";
-  }
-
-  return json;
-}
-
 String getPalette() {
   return String(currentPaletteIndex);
-}
-
-String getPalettes() {
-  String json = "";
-
-  for (uint8_t i = 0; i < paletteCount; i++) {
-    json += "\"" + paletteNames[i] + "\"";
-    if (i < paletteCount - 1)
-      json += ",";
-  }
-
-  return json;
 }
 
 String getAutoplay() {
@@ -311,9 +287,23 @@ String setSHueMax(String value) {
 
   }
 
+  inline namespace Options {
+    void getPatterns(JsonVariant dst) {
+      for (uint8_t i = 0; i < patternCount; i++) {
+        dst.add(patterns[i].name);
+      }
+    }
+
+    void getPalettes(JsonVariant dst) {
+      for (uint8_t i = 0; i < paletteCount; i++) {
+        dst.add(paletteNames[i]);
+      }
+    }
+  }
+
   typedef String (*FieldSetter)(String);
   typedef String (*FieldGetter)();
-  typedef String (*FieldOptions)();
+  typedef void (*FieldOptions)(JsonVariant);
   struct Field {
     const String name;
     const String label;
@@ -361,10 +351,8 @@ String setSHueMax(String value) {
       dst[F("max")] = field.max;
     }
     if (field.getOptions != nullptr) {
-      // TODO -- Update getOptions() functions (only two) to use ArduinoJSON directly
-      String tmp = field.getOptions();
-      String options = "[" + tmp + "]";
-      dst[F("options")] = serialized(options);
+      JsonArray options = dst.createNestedArray(F("options"));
+      field.getOptions(options);
     }
     return;
   }
