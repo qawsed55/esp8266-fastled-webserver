@@ -28,31 +28,35 @@ inline namespace InternalFieldsDetails {
     Section,
     String,
     Label,
+    UtcOffset,
   };
   constexpr bool IsValid(const Field_t& t) {
     return (
-      (t == Field_t::String  ) ||
-      (t == Field_t::Label   ) ||
-      (t == Field_t::Color   ) ||
-      (t == Field_t::Boolean ) ||
-      (t == Field_t::Number  ) ||
-      (t == Field_t::Section ) ||
-      (t == Field_t::Select  ) );
+      (t == Field_t::String   ) ||
+      (t == Field_t::Label    ) ||
+      (t == Field_t::Color    ) ||
+      (t == Field_t::Boolean  ) ||
+      (t == Field_t::Number   ) ||
+      (t == Field_t::Section  ) ||
+      (t == Field_t::Select   ) ||
+      (t == Field_t::UtcOffset) );
   }
 
   const String ToString(const Field_t& t) {
     return
-      (t == Field_t::String)   ?  F("String")   :
-      (t == Field_t::Label)    ?  F("Label")    :
-      (t == Field_t::Color)    ?  F("Color")    :
-      (t == Field_t::Boolean)  ?  F("Boolean")  :
-      (t == Field_t::Number)   ?  F("Number")   :
-      (t == Field_t::Section)  ?  F("Section")  :
-      (t == Field_t::Select)   ?  F("Select")   :
-                                  F("Invalid")  ;
+      (t == Field_t::String)    ?  F("String")   :
+      (t == Field_t::Label)     ?  F("Label")    :
+      (t == Field_t::Color)     ?  F("Color")    :
+      (t == Field_t::Boolean)   ?  F("Boolean")  :
+      (t == Field_t::Number)    ?  F("Number")   :
+      (t == Field_t::Section)   ?  F("Section")  :
+      (t == Field_t::Select)    ?  F("Select")   :
+      (t == Field_t::UtcOffset) ?  F("UtcOffsetIndex") :
+                                   F("Invalid")  ;
   }
 
   inline namespace LegacyStringGettersAndSetters { // This just helps folding / hiding these functions
+
 
 //String setPower(String value) {
 //  power = value.toInt();
@@ -136,6 +140,16 @@ String getCoolLikeIncandescent() {
 
 String getName() {
   return nameString;
+}
+
+String getUtcOffsetIndex() {
+  return String(utcOffsetIndex);
+}
+
+String setUtcOffsetIndexString(String value)
+{
+  auto tmp = setUtcOffsetIndex(value.toInt()); 
+  return String(tmp);
 }
 
 // Pride Playground fields
@@ -330,7 +344,7 @@ String setSHueMax(String value) {
     // obj[F("readonly")] = (field.setValue == nullptr);
     if (field.getValue != nullptr) {
       switch (field.type) {
-        case Field_t::Color: // legacy ... sad but true ...
+        case Field_t::Color: // legacy ... comma-separated string of decimals values
         case Field_t::String:
         case Field_t::Label:
           dst[F("value")] = field.getValue();
@@ -340,13 +354,14 @@ String setSHueMax(String value) {
         case Field_t::Number:
         case Field_t::Section:
         case Field_t::Select:
+        case Field_t::UtcOffset:
           dst[F("value")] = field.getValue().toInt(); // TODO: fix double-conversion
           break;
         
         // intentionally no default ... causes compilation warning if new enum types added w/o updating here
       }
     }
-    if (field.type == Field_t::Number) {
+    if ((field.type == Field_t::Number) || (field.type == Field_t::UtcOffset)) {
       dst[F("min")] = field.min;
       dst[F("max")] = field.max;
     }
@@ -409,22 +424,23 @@ String getFieldsJson(const Field (&fields)[N]) {
 // only items that use the 'getOptions': patterns and palettes
 // only items that support 'setValue': options used for pridePlayground
 const Field fields[] = {
-    {"name",                 "Name",                   Field_t::Label,    0,            0, getName,       nullptr,     nullptr},
-    {"power",                "Power",                  Field_t::Boolean,  0,            1, getPower,      nullptr,     nullptr},
-    {"brightness",           "Brightness",             Field_t::Number,   1,          255, getBrightness, nullptr,     nullptr},
-    {"pattern",              "Pattern",                Field_t::Select,   0, patternCount, getPattern,    getPatterns, nullptr},
-    {"palette",              "Palette",                Field_t::Select,   0, paletteCount, getPalette,    getPalettes, nullptr},
-    {"speed",                "Speed",                  Field_t::Number,   1,          255, getSpeed,      nullptr,     nullptr},
+    {"name",                 "Name",                   Field_t::Label,     0,            0, getName,       nullptr,     nullptr},
+    {"power",                "Power",                  Field_t::Boolean,   0,            1, getPower,      nullptr,     nullptr},
+    {"brightness",           "Brightness",             Field_t::Number,    1,          255, getBrightness, nullptr,     nullptr},
+    {"pattern",              "Pattern",                Field_t::Select,    0, patternCount, getPattern,    getPatterns, nullptr},
+    {"palette",              "Palette",                Field_t::Select,    0, paletteCount, getPalette,    getPalettes, nullptr},
+    {"speed",                "Speed",                  Field_t::Number,    1,          255, getSpeed,      nullptr,     nullptr},
 
     //--------------------------------------------------------------------------------------------------------
-    {"autoplaySection",      "Autoplay",               Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr},
-    {"autoplay",             "Autoplay",               Field_t::Boolean,  0,   1, getAutoplay,             nullptr, nullptr},
-    {"autoplayDuration",     "Autoplay Duration",      Field_t::Number,   0, 255, getAutoplayDuration,     nullptr, nullptr},
+    {"autoplaySection",      "Autoplay",               Field_t::Section,   0,   0, nullptr,                 nullptr, nullptr},
+    {"autoplay",             "Autoplay",               Field_t::Boolean,   0,   1, getAutoplay,             nullptr, nullptr},
+    {"autoplayDuration",     "Autoplay Duration",      Field_t::Number,    0, 255, getAutoplayDuration,     nullptr, nullptr},
 
     //--------------------------------------------------------------------------------------------------------
-    {"clock",                "Clock",                  Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr},	
-    {"showClock",            "Show Clock",             Field_t::Boolean,  0,   1, getShowClock,            nullptr, nullptr},	
-    {"clockBackgroundFade",  "Background Fade",        Field_t::Number,   0, 255, getClockBackgroundFade,  nullptr, nullptr},
+    {"clock",                "Clock",                  Field_t::Section,   0,   0, nullptr,                 nullptr, nullptr},	
+    {"showClock",            "Show Clock",             Field_t::Boolean,   0,   1, getShowClock,            nullptr, nullptr},	
+    {"clockBackgroundFade",  "Background Fade",        Field_t::Number,    0, 255, getClockBackgroundFade,  nullptr, nullptr},
+    {"utcOffsetIndex",       "UTC Offset",             Field_t::UtcOffset, 0, 104, getUtcOffsetIndex,       nullptr, setUtcOffsetIndexString},
 
     //--------------------------------------------------------------------------------------------------------
     {"solidColorSection",    "Solid Color",            Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr},
@@ -482,6 +498,26 @@ void setClockBackgroundFade(uint8_t value)
   clockBackgroundFade = value;
   writeAndCommitSettings();
   broadcastInt("clockBackgroundFade", clockBackgroundFade);
+}
+uint8_t setUtcOffsetIndex(uint8_t value) {
+  utcOffsetIndex = value;
+  if (utcOffsetIndex > 104) utcOffsetIndex = 104; // 0 === -12 hours, 104 === +14 hours
+  
+  const int32_t UTC_OFFSET_MINIMUM_MINUTES = ((int32_t)-12) * 60; // corresponds to index 0
+  const int32_t UTC_OFFSET_INCREMENT_MINUTES = 15; // each higher index increments by this amount
+  
+  // minutes above the minimum
+  int32_t tmp = utcOffsetIndex * UTC_OFFSET_INCREMENT_MINUTES;
+  // add that to the minimum value
+  tmp = UTC_OFFSET_MINIMUM_MINUTES + tmp;
+  // convert to seconds
+  utcOffsetInSeconds = tmp * 60;
+
+  Serial.print(F("utcOffsetIndex: ")); Serial.println(utcOffsetIndex);
+  Serial.print(F("utcOffsetInSeconds: ")); Serial.println(utcOffsetInSeconds);
+  timeClient.setTimeOffset(utcOffsetInSeconds);
+  writeAndCommitSettings();
+  return utcOffsetIndex;
 }
 
 

@@ -201,6 +201,8 @@ extern WiFiManager wifiManager;
 extern ESP8266WebServer webServer;
 extern NTPClient timeClient;
 extern String nameString;
+extern int utcOffsetInSeconds;
+extern uint8_t utcOffsetIndex;
 
 extern CRGB leds[NUM_PIXELS];
 

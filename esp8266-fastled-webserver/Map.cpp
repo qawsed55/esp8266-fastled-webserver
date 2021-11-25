@@ -80,7 +80,7 @@
   static const uint8_t (&radiusProxy)[NUM_PIXELS] = physicalToFibonacci;
   static const uint8_t RADII_SCALE_DIVISOR    { 1 };
   static const uint8_t RADII_SCALE_MULTIPLIER { 2 };
-#elif defined(PRODUCT_FIBONACCI64_FULL) || defined(PRODUCT_FIBONACCI64_MINI)
+#elif defined(PRODUCT_FIBONACCI64_FULL) || defined(PRODUCT_FIBONACCI64_MINI) || defined(PRODUCT_FIBONACCI64_MICRO) || defined(PRODUCT_FIBONACCI64_NANO)
   const uint8_t  physicalToFibonacci[NUM_PIXELS] { 0, 13, 26, 39, 52, 57, 44, 31, 18, 5, 10, 23, 36, 49, 62, 54, 41, 28, 15, 2, 7, 20, 33, 46, 59, 51, 38, 25, 12, 4, 17, 30, 43, 56, 61, 48, 35, 22, 9, 1, 14, 27, 40, 53, 58, 45, 32, 19, 6, 11, 24, 37, 50, 63, 55, 42, 29, 16, 3, 8, 21, 34, 47, 60 };
   const uint8_t  fibonacciToPhysical[NUM_PIXELS] { 0, 39, 19, 58, 29, 9, 48, 20, 59, 38, 10, 49, 28, 1, 40, 18, 57, 30, 8, 47, 21, 60, 37, 11, 50, 27, 2, 41, 17, 56, 31, 7, 46, 22, 61, 36, 12, 51, 26, 3, 42, 16, 55, 32, 6, 45, 23, 62, 35, 13, 52, 25, 4, 43, 15, 54, 33, 5, 44, 24, 63, 34, 14, 53 };
   const uint8_t  coordsX[NUM_PIXELS]             { 140, 189, 208, 214, 208, 146, 168, 180, 180, 162, 152, 146, 129, 103, 72, 40, 70, 97, 120, 131, 107, 79, 50, 23, 0, 7, 23, 46, 76, 93, 57, 37, 28, 29, 87, 68, 59, 62, 80, 113, 91, 94, 109, 133, 202, 172, 145, 125, 117, 145, 170, 198, 227, 253, 255, 235, 210, 181, 148, 175, 207, 228, 240, 244 };
@@ -442,9 +442,9 @@ void drawAnalogClock() {
     float minute = timeClient.getMinutes() + (second / 60.0);
     float hour   = timeClient.getHours()   + (minute / 60.0);
 
-    hourAngle   = 256u - hour   * degreesPerHour;
-    minuteAngle = 256u - minute * degreesPerMinute;
-    secondAngle = 256u - second * degreesPerSecond;
+    hourAngle   = 64u - hour   * degreesPerHour;
+    minuteAngle = 64u - minute * degreesPerMinute;
+    secondAngle = 64u - second * degreesPerSecond;
   }
 
   // although can update angles once every 100ms, have to perform fade & overlay with each cycle
@@ -473,42 +473,42 @@ void drawSpiralAnalogClock(uint8_t step_h, uint8_t step_m, uint8_t step_s) {
     float minute = timeClient.getMinutes() + (second / 60.0);
     float hour   = timeClient.getHours()   + (minute / 60.0);
 
-    hourAngle   = 256u - hour   * degreesPerHour;
-    minuteAngle = 256u - minute * degreesPerMinute;
-    secondAngle = 256u - second * degreesPerSecond;
+    hourAngle   = 64u - hour   * degreesPerHour;
+    minuteAngle = 64u - minute * degreesPerMinute;
+    secondAngle = 64u - second * degreesPerSecond;
   }
 
-  drawSpiralLine(secondAngle, step_s, CRGB(0, 0, 2));
-  drawSpiralLine(minuteAngle, step_m, CRGB(0, 2, 0));
-  drawSpiralLine(hourAngle,   step_h, CRGB(2, 0, 0));
+  drawSpiralLine(secondAngle, step_s, CRGB::Blue );
+  drawSpiralLine(minuteAngle, step_m, CRGB::Green);
+  drawSpiralLine(hourAngle,   step_h, CRGB::Red  );
 }
 void drawSpiralAnalogClock(uint8_t step) {
   drawSpiralAnalogClock(step, step, step);
 }
 void drawSpiralAnalogClock13() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(13, 13, 13);
+  drawSpiralAnalogClock(13);
 }
 void drawSpiralAnalogClock21() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(21, 21, 21);
+  drawSpiralAnalogClock(21);
 }
 void drawSpiralAnalogClock34() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(34, 34, 34);
+  drawSpiralAnalogClock(34);
 }
 void drawSpiralAnalogClock55() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(55, 55, 55);
+  drawSpiralAnalogClock(55);
 }
 void drawSpiralAnalogClock89() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(89, 89, 89);
+  drawSpiralAnalogClock(89);
 }
 void drawSpiralAnalogClock21and34() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);
-  drawSpiralAnalogClock(21, 21, 21);
-  drawSpiralAnalogClock(34, 34, 34);
+  drawSpiralAnalogClock(21);
+  drawSpiralAnalogClock(34);
 }
 void drawSpiralAnalogClock13_21_and_34() {
   fadeToBlackBy(leds, NUM_PIXELS, clockBackgroundFade);

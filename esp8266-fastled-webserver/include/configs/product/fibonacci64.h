@@ -45,10 +45,6 @@
 //       Nano:  A0, A1, A2
 //
 
-#if defined(PRODUCT_FIBONACCI64_MICRO) || defined(PRODUCT_FIBONACCI64_NANO)
-   #error "The Fibonacci64 micro and nano are not yet supported."
-#endif
-
 #if !defined(LED_TYPE)
    #if defined(PRODUCT_FIBONACCI64_NANO)
       #define LED_TYPE                  SK6812

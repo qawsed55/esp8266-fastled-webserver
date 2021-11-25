@@ -90,9 +90,6 @@
 // Set defaults for optional values
 // ////////////////////////////////////////////////////////////////////////////////////////////////////
 #if 1 // just for collapsing
-    #if !defined(UTC_OFFSET_IN_SECONDS)
-        #define UTC_OFFSET_IN_SECONDS (-6L * 60L * 60L) // UTC-6 (East-coast US ... no DST support)
-    #endif
     #if !defined(NTP_UPDATE_THROTTLE_MILLLISECONDS)
         #define NTP_UPDATE_THROTTLE_MILLLISECONDS (5UL * 60UL * 60UL * 1000UL) // Ping NTP server no more than every 5 minutes
     #endif

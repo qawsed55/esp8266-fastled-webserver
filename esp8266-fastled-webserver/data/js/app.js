@@ -145,6 +145,8 @@ $(document).ready(function() {
           addStringField(field, false);
         } else if (field.type == "Label") {
           addStringField(field, true);
+        } else if (field.type == "UtcOffsetIndex") {
+          addUtcOffsetIndexField(field, true);
         }
       });
 
@@ -293,6 +295,52 @@ function addSelectField(field) {
     value++;
     if(value >= count)
       value = 0;
+    select.val(value);
+    postValue(field.name, value);
+  });
+
+  $("#form").append(template);
+}
+
+function addUtcOffsetIndexField(field) {
+  var template = $("#utcOffsetIndexTemplate").clone();
+
+  template.attr("id", "form-group-" + field.name);
+  template.attr("data-field-type", field.type);
+
+  var id = "input-" + field.name;
+
+  var label = template.find(".control-label");
+  label.attr("for", id);
+  label.text(field.label);
+
+  var select = template.find(".form-control");
+  select.attr("id", id);
+
+  select.val(field.value);
+
+  select.change(function () {
+    var value = template.find("#" + id + " option:selected").index();
+    postValue(field.name, value);
+  });
+
+  var previousButton = template.find(".btn-previous");
+  var nextButton = template.find(".btn-next");
+
+  previousButton.click(function () {
+    var value = template.find("#" + id + " option:selected").index();
+    var count = select.find("option").length;
+    value--;
+    if (value < 0) value = count - 1;
+    select.val(value);
+    postValue(field.name, value);
+  });
+
+  nextButton.click(function () {
+    var value = template.find("#" + id + " option:selected").index();
+    var count = select.find("option").length;
+    value++;
+    if (value >= count) value = 0;
     select.val(value);
     postValue(field.name, value);
   });
