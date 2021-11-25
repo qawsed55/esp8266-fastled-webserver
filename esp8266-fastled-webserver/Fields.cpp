@@ -29,12 +29,6 @@ const String UtcOffsetIndexFieldType = "UtcOffsetIndex";
 uint8_t power = 1;
 uint8_t brightness = brightnessMap[brightnessIndex];
 
-
-float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
-{
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
 //String setPower(String value) {
 //  power = value.toInt();
 //  if(power < 0) power = 0;
@@ -164,10 +158,18 @@ String setUtcOffsetIndex(uint8_t value)
 {
   utcOffsetIndex = value;
   if (utcOffsetIndex > 104) utcOffsetIndex = 104;
-  float utcOffsetInHours = mapfloat(utcOffsetIndex, 0, 104, -12, 14);
-  utcOffsetInSeconds = utcOffsetInHours * 60 * 60;
+  
+  const int32_t UTC_OFFSET_MINIMUM_MINUTES = ((int32_t)-12) * 60; // corresponds to index 0
+  const int32_t UTC_OFFSET_INCREMENT_MINUTES = 15; // each higher index increments by this amount
+  
+  // minutes above the minimum
+  int32_t tmp = utcOffsetIndex * UTC_OFFSET_INCREMENT_MINUTES;
+  // add that to the minimum value
+  tmp = UTC_OFFSET_MINIMUM_MINUTES + tmp;
+  // convert to seconds
+  utcOffsetInSeconds = tmp * 60;
+
   Serial.print(F("utcOffsetIndex: ")); Serial.println(utcOffsetIndex);
-  Serial.print(F("utcOffsetInHours: ")); Serial.println(utcOffsetInHours);
   Serial.print(F("utcOffsetInSeconds: ")); Serial.println(utcOffsetInSeconds);
   timeClient.setTimeOffset(utcOffsetInSeconds);
   writeAndCommitSettings();
