@@ -372,116 +372,116 @@ inline namespace InternalFieldsDetails {
     return;
   }
 
-// passing array reference works fine, but need to make the function a template
-// to capture the array size... on the positive side, no need to pass `count` parameter
-template <size_t N>
-Field  getField(String name, const Field (&fields)[N]) {
-  for (uint8_t i = 0; i < N; i++) {
-    Field field = fields[i];
-    if (field.name == name) {
-      return field;
+  // passing array reference works fine, but need to make the function a template
+  // to capture the array size... on the positive side, no need to pass `count` parameter
+  template <size_t N>
+  Field  getField(String name, const Field (&fields)[N]) {
+    for (uint8_t i = 0; i < N; i++) {
+      Field field = fields[i];
+      if (field.name == name) {
+        return field;
+      }
     }
+    return Field();
   }
-  return Field();
-}
-template <size_t N>
-String getFieldValue(String name, const Field (&fields)[N]) {
-  Field field = getField(name, fields);
-  if (field.getValue) {
-    return field.getValue();
+  template <size_t N>
+  String getFieldValue(String name, const Field (&fields)[N]) {
+    Field field = getField(name, fields);
+    if (field.getValue) {
+      return field.getValue();
+    }
+    return String();
   }
-  return String();
-}
-template <size_t N>
-String setFieldValue(String name, String value, const Field (&fields)[N]) {
-  Field field = getField(name, fields);
-  if (field.setValue) {
-    return field.setValue(value);
+  template <size_t N>
+  String setFieldValue(String name, String value, const Field (&fields)[N]) {
+    Field field = getField(name, fields);
+    if (field.setValue) {
+      return field.setValue(value);
+    }
+    return String();
   }
-  return String();
-}
 
-template <size_t N>
-String getFieldsJson(const Field (&fields)[N]) {
-  // As of 2021-11-23, https://arduinojson.org/v6/assistant/ reports minimum 8041 bytes required (for Fib256).
-  // This depends upon three things:
-  // 1. the number of fields
-  // 2. the number of palettes (and their names)
-  // 3. the number of patterns (and their names)
-  DynamicJsonDocument jsonDoc(8192);
-  JsonArray array = jsonDoc.to<JsonArray>(); // document is an array of fields
-  for (const Field& field : fields) {
-    array.add(field);
+  template <size_t N>
+  String getFieldsJson(const Field (&fields)[N]) {
+    // As of 2021-11-23, https://arduinojson.org/v6/assistant/ reports minimum 8041 bytes required (for Fib256).
+    // This depends upon three things:
+    // 1. the number of fields
+    // 2. the number of palettes (and their names)
+    // 3. the number of patterns (and their names)
+    DynamicJsonDocument jsonDoc(8192);
+    JsonArray array = jsonDoc.to<JsonArray>(); // document is an array of fields
+    for (const Field& field : fields) {
+      array.add(field);
+    }
+    // that's all ... just serialize the result to String (or anything else...)
+    String result;
+    result.reserve(6*1024); // ~4939 for Fib256 ... pre-allocation is a performance optimization
+    serializeJson(jsonDoc, result);
+    return result;
   }
-  // that's all ... just serialize the result to String (or anything else...)
-  String result;
-  result.reserve(6*1024); // ~4939 for Fib256 ... pre-allocation is a performance optimization
-  serializeJson(jsonDoc, result);
-  return result;
-}
 
-// name, label, type, min, max, getValue, getOptions, setValue
-// only items that use the 'getOptions': patterns and palettes
-// only items that support 'setValue': options used for pridePlayground
-const Field fields[] = {
-    {"name",                 "Name",                   Field_t::Label,     0,            0, getName,       nullptr,     nullptr},
-    {"power",                "Power",                  Field_t::Boolean,   0,            1, getPower,      nullptr,     nullptr},
-    {"brightness",           "Brightness",             Field_t::Number,    1,          255, getBrightness, nullptr,     nullptr},
-    {"pattern",              "Pattern",                Field_t::Select,    0, patternCount, getPattern,    getPatterns, nullptr},
-    {"palette",              "Palette",                Field_t::Select,    0, paletteCount, getPalette,    getPalettes, nullptr},
-    {"speed",                "Speed",                  Field_t::Number,    1,          255, getSpeed,      nullptr,     nullptr},
+  // name, label, type, min, max, getValue, getOptions, setValue
+  // only items that use the 'getOptions': patterns and palettes
+  // only items that support 'setValue': options used for pridePlayground
+  const Field fields[] = {
+      {"name",                 "Name",                   Field_t::Label,     0,            0, getName,       nullptr,     nullptr},
+      {"power",                "Power",                  Field_t::Boolean,   0,            1, getPower,      nullptr,     nullptr},
+      {"brightness",           "Brightness",             Field_t::Number,    1,          255, getBrightness, nullptr,     nullptr},
+      {"pattern",              "Pattern",                Field_t::Select,    0, patternCount, getPattern,    getPatterns, nullptr},
+      {"palette",              "Palette",                Field_t::Select,    0, paletteCount, getPalette,    getPalettes, nullptr},
+      {"speed",                "Speed",                  Field_t::Number,    1,          255, getSpeed,      nullptr,     nullptr},
 
-    //--------------------------------------------------------------------------------------------------------
-    {"autoplaySection",      "Autoplay",               Field_t::Section,   0,   0, nullptr,                 nullptr, nullptr},
-    {"autoplay",             "Autoplay",               Field_t::Boolean,   0,   1, getAutoplay,             nullptr, nullptr},
-    {"autoplayDuration",     "Autoplay Duration",      Field_t::Number,    0, 255, getAutoplayDuration,     nullptr, nullptr},
+      //--------------------------------------------------------------------------------------------------------
+      {"autoplaySection",      "Autoplay",               Field_t::Section,   0,   0, nullptr,                 nullptr, nullptr},
+      {"autoplay",             "Autoplay",               Field_t::Boolean,   0,   1, getAutoplay,             nullptr, nullptr},
+      {"autoplayDuration",     "Autoplay Duration",      Field_t::Number,    0, 255, getAutoplayDuration,     nullptr, nullptr},
 
-    //--------------------------------------------------------------------------------------------------------
-    {"clock",                "Clock",                  Field_t::Section,   0,   0, nullptr,                 nullptr, nullptr},	
-    {"showClock",            "Show Clock",             Field_t::Boolean,   0,   1, getShowClock,            nullptr, nullptr},	
-    {"clockBackgroundFade",  "Background Fade",        Field_t::Number,    0, 255, getClockBackgroundFade,  nullptr, nullptr},
-    {"utcOffsetIndex",       "UTC Offset",             Field_t::UtcOffset, 0, 104, getUtcOffsetIndex,       nullptr, setUtcOffsetIndexString},
+      //--------------------------------------------------------------------------------------------------------
+      {"clock",                "Clock",                  Field_t::Section,   0,   0, nullptr,                 nullptr, nullptr},	
+      {"showClock",            "Show Clock",             Field_t::Boolean,   0,   1, getShowClock,            nullptr, nullptr},	
+      {"clockBackgroundFade",  "Background Fade",        Field_t::Number,    0, 255, getClockBackgroundFade,  nullptr, nullptr},
+      {"utcOffsetIndex",       "UTC Offset",             Field_t::UtcOffset, 0, 104, getUtcOffsetIndex,       nullptr, setUtcOffsetIndexString},
 
-    //--------------------------------------------------------------------------------------------------------
-    {"solidColorSection",    "Solid Color",            Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr},
-    {"solidColor",           "Color",                  Field_t::Color,    0, 255, getSolidColor,           nullptr, nullptr},
+      //--------------------------------------------------------------------------------------------------------
+      {"solidColorSection",    "Solid Color",            Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr},
+      {"solidColor",           "Color",                  Field_t::Color,    0, 255, getSolidColor,           nullptr, nullptr},
 
-    //--------------------------------------------------------------------------------------------------------
-    {"fireSection",          "Fire & Water",           Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr},
-    {"cooling",              "Cooling",                Field_t::Number,   0, 255, getCooling,              nullptr, nullptr},
-    {"sparking",             "Sparking",               Field_t::Number,   0, 255, getSparking,             nullptr, nullptr},
+      //--------------------------------------------------------------------------------------------------------
+      {"fireSection",          "Fire & Water",           Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr},
+      {"cooling",              "Cooling",                Field_t::Number,   0, 255, getCooling,              nullptr, nullptr},
+      {"sparking",             "Sparking",               Field_t::Number,   0, 255, getSparking,             nullptr, nullptr},
 
-    //--------------------------------------------------------------------------------------------------------
-    {"twinklesSection",      "Twinkles",               Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr},
-    {"twinkleSpeed",         "Twinkle Speed",          Field_t::Number,   0,   8, getTwinkleSpeed,         nullptr, nullptr},
-    {"twinkleDensity",       "Twinkle Density",        Field_t::Number,   0,   8, getTwinkleDensity,       nullptr, nullptr},
-    {"coolLikeIncandescent", "Incandescent Cool",      Field_t::Boolean,  0,   1, getCoolLikeIncandescent, nullptr, nullptr},
+      //--------------------------------------------------------------------------------------------------------
+      {"twinklesSection",      "Twinkles",               Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr},
+      {"twinkleSpeed",         "Twinkle Speed",          Field_t::Number,   0,   8, getTwinkleSpeed,         nullptr, nullptr},
+      {"twinkleDensity",       "Twinkle Density",        Field_t::Number,   0,   8, getTwinkleDensity,       nullptr, nullptr},
+      {"coolLikeIncandescent", "Incandescent Cool",      Field_t::Boolean,  0,   1, getCoolLikeIncandescent, nullptr, nullptr},
 
-    //--------------------------------------------------------------------------------------------------------
-    {"prideSection",         "Pride Playground",       Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr             },
-    {"saturationBpm",        "Saturation BPM",         Field_t::Number,   0, 255, getSaturationBpm,        nullptr, setSaturationBpm    },
-    {"saturationMin",        "Saturation Min",         Field_t::Number,   0, 255, getSaturationMin,        nullptr, setSaturationMin    },
-    {"saturationMax",        "Saturation Max",         Field_t::Number,   0, 255, getSaturationMax,        nullptr, setSaturationMax    },
-    {"brightDepthBpm",       "Brightness Depth BPM",   Field_t::Number,   0, 255, getBrightDepthBpm,       nullptr, setBrightDepthBpm   },
-    {"brightDepthMin",       "Brightness Depth Min",   Field_t::Number,   0, 255, getBrightDepthMin,       nullptr, setBrightDepthMin   },
-    {"brightDepthMax",       "Brightness Depth Max",   Field_t::Number,   0, 255, getBrightDepthMax,       nullptr, setBrightDepthMax   },
-    {"brightThetaIncBpm",    "Bright Theta Inc BPM",   Field_t::Number,   0, 255, getBrightThetaIncBpm,    nullptr, setBrightThetaIncBpm},
-    {"brightThetaIncMin",    "Bright Theta Inc Min",   Field_t::Number,   0, 255, getBrightThetaIncMin,    nullptr, setBrightThetaIncMin},
-    {"brightThetaIncMax",    "Bright Theta Inc Max",   Field_t::Number,   0, 255, getBrightThetaIncMax,    nullptr, setBrightThetaIncMax},
-    {"msMultiplierBpm",      "Time Multiplier BPM",    Field_t::Number,   0, 255, getMsMultiplierBpm,      nullptr, setMsMultiplierBpm  },
-    {"msMultiplierMin",      "Time Multiplier Min",    Field_t::Number,   0, 255, getMsMultiplierMin,      nullptr, setMsMultiplierMin  },
-    {"msMultiplierMax",      "Time Multiplier Max",    Field_t::Number,   0, 255, getMsMultiplierMax,      nullptr, setMsMultiplierMax  },
-    {"hueIncBpm",            "Hue Inc BPM",            Field_t::Number,   0, 255, getHueIncBpm,            nullptr, setHueIncBpm        },
-    {"hueIncMin",            "Hue Inc Min",            Field_t::Number,   0, 255, getHueIncMin,            nullptr, setHueIncMin        },
-    {"hueIncMax",            "Hue Inc Max",            Field_t::Number,   0, 255, getHueIncMax,            nullptr, setHueIncMax        },
-    {"sHueBpm",              "S Hue BPM",              Field_t::Number,   0, 255, getSHueBpm,              nullptr, setSHueBpm          },
-    {"sHueMin",              "S Hue Min",              Field_t::Number,   0, 255, getSHueMin,              nullptr, setSHueMin          },
-    {"sHueMax",              "S Hue Max",              Field_t::Number,   0, 255, getSHueMax,              nullptr, setSHueMax          },
-};
+      //--------------------------------------------------------------------------------------------------------
+      {"prideSection",         "Pride Playground",       Field_t::Section,  0,   0, nullptr,                 nullptr, nullptr             },
+      {"saturationBpm",        "Saturation BPM",         Field_t::Number,   0, 255, getSaturationBpm,        nullptr, setSaturationBpm    },
+      {"saturationMin",        "Saturation Min",         Field_t::Number,   0, 255, getSaturationMin,        nullptr, setSaturationMin    },
+      {"saturationMax",        "Saturation Max",         Field_t::Number,   0, 255, getSaturationMax,        nullptr, setSaturationMax    },
+      {"brightDepthBpm",       "Brightness Depth BPM",   Field_t::Number,   0, 255, getBrightDepthBpm,       nullptr, setBrightDepthBpm   },
+      {"brightDepthMin",       "Brightness Depth Min",   Field_t::Number,   0, 255, getBrightDepthMin,       nullptr, setBrightDepthMin   },
+      {"brightDepthMax",       "Brightness Depth Max",   Field_t::Number,   0, 255, getBrightDepthMax,       nullptr, setBrightDepthMax   },
+      {"brightThetaIncBpm",    "Bright Theta Inc BPM",   Field_t::Number,   0, 255, getBrightThetaIncBpm,    nullptr, setBrightThetaIncBpm},
+      {"brightThetaIncMin",    "Bright Theta Inc Min",   Field_t::Number,   0, 255, getBrightThetaIncMin,    nullptr, setBrightThetaIncMin},
+      {"brightThetaIncMax",    "Bright Theta Inc Max",   Field_t::Number,   0, 255, getBrightThetaIncMax,    nullptr, setBrightThetaIncMax},
+      {"msMultiplierBpm",      "Time Multiplier BPM",    Field_t::Number,   0, 255, getMsMultiplierBpm,      nullptr, setMsMultiplierBpm  },
+      {"msMultiplierMin",      "Time Multiplier Min",    Field_t::Number,   0, 255, getMsMultiplierMin,      nullptr, setMsMultiplierMin  },
+      {"msMultiplierMax",      "Time Multiplier Max",    Field_t::Number,   0, 255, getMsMultiplierMax,      nullptr, setMsMultiplierMax  },
+      {"hueIncBpm",            "Hue Inc BPM",            Field_t::Number,   0, 255, getHueIncBpm,            nullptr, setHueIncBpm        },
+      {"hueIncMin",            "Hue Inc Min",            Field_t::Number,   0, 255, getHueIncMin,            nullptr, setHueIncMin        },
+      {"hueIncMax",            "Hue Inc Max",            Field_t::Number,   0, 255, getHueIncMax,            nullptr, setHueIncMax        },
+      {"sHueBpm",              "S Hue BPM",              Field_t::Number,   0, 255, getSHueBpm,              nullptr, setSHueBpm          },
+      {"sHueMin",              "S Hue Min",              Field_t::Number,   0, 255, getSHueMin,              nullptr, setSHueMin          },
+      {"sHueMax",              "S Hue Max",              Field_t::Number,   0, 255, getSHueMax,              nullptr, setSHueMax          },
+  };
 
-Field getField(String name) {
-  return getField(name, fields);
-}
+  Field getField(String name) {
+    return getField(name, fields);
+  }
 
 } // end inline anonymous namespace
 
