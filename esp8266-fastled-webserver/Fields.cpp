@@ -30,6 +30,10 @@ uint8_t power = 1;
 uint8_t brightness = brightnessMap[brightnessIndex];
 
 
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 //String setPower(String value) {
 //  power = value.toInt();
@@ -160,7 +164,7 @@ String setUtcOffsetIndex(uint8_t value)
 {
   utcOffsetIndex = value;
   if (utcOffsetIndex > 104) utcOffsetIndex = 104;
-  int utcOffsetInHours = map(utcOffsetIndex, 0, 104, -12, 14);
+  float utcOffsetInHours = mapfloat(utcOffsetIndex, 0, 104, -12, 14);
   utcOffsetInSeconds = utcOffsetInHours * 60 * 60;
   Serial.print(F("utcOffsetIndex: ")); Serial.println(utcOffsetIndex);
   Serial.print(F("utcOffsetInHours: ")); Serial.println(utcOffsetInHours);
