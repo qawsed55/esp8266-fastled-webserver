@@ -325,6 +325,50 @@ String setSHueMax(String value) {
     FieldSetter  setValue;
   };
 
+  void convertToJson(const Field& field, JsonVariant dst) {
+    if (field.name.length() == 0) {
+      return;
+    }
+    if (!IsValid(field.type)) {
+      return;
+    }
+
+    dst[F("name")]  = field.name;
+    dst[F("label")] = field.label;
+
+    dst[F("type")]  = ToString(field.type);
+    // obj[F("readonly")] = (field.setValue == nullptr);
+    if (field.getValue != nullptr) {
+      switch (field.type) {
+        case Field_t::Color: // legacy ... sad but true ...
+        case Field_t::String:
+        case Field_t::Label:
+          dst[F("value")] = field.getValue();
+          break;
+
+        case Field_t::Boolean:
+        case Field_t::Number:
+        case Field_t::Section:
+        case Field_t::Select:
+          dst[F("value")] = field.getValue().toInt(); // TODO: fix double-conversion
+          break;
+        
+        // intentionally no default ... causes compilation warning if new enum types added w/o updating here
+      }
+    }
+    if (field.type == Field_t::Number) {
+      dst[F("min")] = field.min;
+      dst[F("max")] = field.max;
+    }
+    if (field.getOptions != nullptr) {
+      // TODO -- Update getOptions() functions (only two) to use ArduinoJSON directly
+      String tmp = field.getOptions();
+      String options = "[" + tmp + "]";
+      dst[F("options")] = serialized(options);
+    }
+    return;
+  }
+
 // passing array reference works fine, but need to make the function a template
 // to capture the array size... on the positive side, no need to pass `count` parameter
 template <size_t N>
@@ -356,45 +400,21 @@ String setFieldValue(String name, String value, const Field (&fields)[N]) {
 
 template <size_t N>
 String getFieldsJson(const Field (&fields)[N]) {
-  String json = "[";
-
-  for (uint8_t i = 0; i < N; i++) {
-    Field field = fields[i];
-
-    json += "{\"name\":\""    + field.name 
-         +  "\",\"label\":\"" + field.label
-         + "\",\"type\":\"" + ToString(field.type)
-         + "\"";
-
-    if(field.getValue) {
-      if (field.type == Field_t::Color || field.type == Field_t::String || field.type == Field_t::Label) {
-        json += ",\"value\":\"" + field.getValue() + "\"";
-      }
-      else {
-        json += ",\"value\":" + field.getValue();
-      }
-    }
-
-    if (field.type == Field_t::Number) {
-      json += ",\"min\":" + String(field.min);
-      json += ",\"max\":" + String(field.max);
-    }
-
-    if (field.getOptions) {
-      json += ",\"options\":[";
-      json += field.getOptions();
-      json += "]";
-    }
-
-    json += "}";
-
-    if (i < N - 1)
-      json += ",";
+  // As of 2021-11-23, https://arduinojson.org/v6/assistant/ reports minimum 8041 bytes required (for Fib256).
+  // This depends upon three things:
+  // 1. the number of fields
+  // 2. the number of palettes (and their names)
+  // 3. the number of patterns (and their names)
+  DynamicJsonDocument jsonDoc(8192);
+  JsonArray array = jsonDoc.to<JsonArray>(); // document is an array of fields
+  for (const Field& field : fields) {
+    array.add(field);
   }
-
-  json += "]";
-
-  return json;
+  // that's all ... just serialize the result to String (or anything else...)
+  String result;
+  result.reserve(6*1024); // ~4939 for Fib256 ... pre-allocation is a performance optimization
+  serializeJson(jsonDoc, result);
+  return result;
 }
 
 // name, label, type, min, max, getValue, getOptions, setValue
