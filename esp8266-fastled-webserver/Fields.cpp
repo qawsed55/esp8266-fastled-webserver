@@ -19,7 +19,7 @@
 
 // only items outside the anonymous namespace can be exported.
 // this keeps the global namespace cleaner, with no runtime/RAM costs.
-inline namespace InternalFieldsDetails {
+inline namespace {
   enum struct Field_t : uint8_t {
     Number,
     Boolean,
