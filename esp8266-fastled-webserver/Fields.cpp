@@ -32,13 +32,13 @@ inline namespace {
   };
   constexpr bool IsValid(const Field_t& t) {
     return (
+      (t == Field_t::Number   ) ||
+      (t == Field_t::Boolean  ) ||
+      (t == Field_t::Select   ) ||
+      (t == Field_t::Color    ) ||
+      (t == Field_t::Section  ) ||
       (t == Field_t::String   ) ||
       (t == Field_t::Label    ) ||
-      (t == Field_t::Color    ) ||
-      (t == Field_t::Boolean  ) ||
-      (t == Field_t::Number   ) ||
-      (t == Field_t::Section  ) ||
-      (t == Field_t::Select   ) ||
       (t == Field_t::UtcOffset) );
   }
 
