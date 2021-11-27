@@ -144,7 +144,7 @@ const PatternAndName patterns[] = {
   { xyGradientPalette,                 "XY Axis Gradient Palette" },
 #endif
 
-#if HAS_POLAR_COORDS // really a wrong name... and likely doing way more computation than necessary
+#if HAS_POLAR_COORDS
   // noise patterns (Polar variations)
   { gradientPalettePolarNoise,         "Gradient Palette Polar Noise" },
   { palettePolarNoise,                 "Palette Polar Noise" },
