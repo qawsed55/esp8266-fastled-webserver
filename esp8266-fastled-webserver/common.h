@@ -132,7 +132,6 @@ void broadcastString(String name, String value);
 
 // Structures
 typedef void (*Pattern)();
-typedef Pattern PatternList[];
 typedef struct {
   Pattern pattern;
   String name;
