@@ -27,6 +27,10 @@
 #include "config.h"
 
 #if 1 // external libraries
+  #define ARDUINOJSON_DECODE_UNICODE 0 // don't need to decode Unicode to UTF-8
+  #define ARDUINOJSON_USE_LONG_LONG 1  // storing uint32_t requires this flag
+  #include "ArduinoJson.h"
+
   #define FASTLED_INTERNAL // no other way to suppress build warnings
   #include <FastLED.h>
   FASTLED_USING_NAMESPACE
@@ -128,7 +132,6 @@ void broadcastString(String name, String value);
 
 // Structures
 typedef void (*Pattern)();
-typedef Pattern PatternList[];
 typedef struct {
   Pattern pattern;
   String name;
@@ -199,7 +202,6 @@ extern NTPClient timeClient;
 extern String nameString;
 extern int utcOffsetInSeconds;
 extern uint8_t utcOffsetIndex;
-extern String setUtcOffsetIndex(uint8_t value);
 
 extern CRGB leds[NUM_PIXELS];
 

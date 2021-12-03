@@ -146,7 +146,8 @@ void drawNoise(CRGBPalette16 palette, uint8_t hueReduce = 0)
 }
 
 #if HAS_POLAR_COORDS // change to "HAS_CONCENTRIC_RINGS" ?
-// drawPolarNoise() uses angles[] and rings[][] (may move to using radii[])
+
+// drawPolarNoise() uses angles[] and radii[]
 void drawPolarNoise(CRGBPalette16 palette, uint8_t hueReduce = 0)
 {
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {

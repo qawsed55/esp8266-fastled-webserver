@@ -24,7 +24,7 @@ extern uint8_t brightness;
 
 void setShowClock(uint8_t value);
 void setClockBackgroundFade(uint8_t value);
-String setUtcOffsetIndexString(String value);
+uint8_t setUtcOffsetIndex(uint8_t value);
 
 String getFieldValue(String name);
 String setFieldValue(String name, String value);
