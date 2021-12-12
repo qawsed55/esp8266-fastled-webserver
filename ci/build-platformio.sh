@@ -12,7 +12,7 @@ curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core-installe
 python3 get-platformio.py
 
 # Install esp8266 platform
-pio platform install "esp8266"
+pio platform install "espressif8266"
 
 # Compile project
 pio run
