@@ -3,9 +3,9 @@ on: [pull_request, push]
 jobs:
   build:
     runs-on: ubuntu-latest
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      
-    - name: Build on PlatformIO
-      run: bash ci/build-platformio.sh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        
+      - name: Build on PlatformIO
+        run: bash ci/build-platformio.sh
