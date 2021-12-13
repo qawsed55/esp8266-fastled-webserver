@@ -228,6 +228,10 @@ extern CRGB leds[NUM_PIXELS];
   extern const uint8_t  radii[NUM_PIXELS];  // needed in noise.cpp
 #endif
 
+#if HAS_RADIUS_PROXY
+  extern const uint8_t (&radiusProxy)[NUM_PIXELS];  // needed in noise.cpp
+#endif
+
 #include "include/GradientPalettes.hpp"
 #include "include/Fields.hpp"
 #include "include/FSBrowser.hpp"
@@ -306,8 +310,8 @@ void oceanNoise();
 void blackAndWhiteNoise();
 void blackAndBlueNoise();
 
-// noise.h -- only when product defines HAS_POLAR_COORDS to be true
-#if HAS_POLAR_COORDS
+// noise.h -- only when product defines HAS_RADIUS_PROXY to be true
+#if HAS_RADIUS_PROXY
 void palettePolarNoise();
 void gradientPalettePolarNoise();
 void rainbowPolarNoise();

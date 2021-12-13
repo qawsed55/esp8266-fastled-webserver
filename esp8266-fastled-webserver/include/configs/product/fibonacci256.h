@@ -62,6 +62,9 @@
 #if !defined(HAS_POLAR_COORDS)
    #define HAS_POLAR_COORDS              0
 #endif
+#if !defined(HAS_RADIUS_PROXY)
+   #define HAS_RADIUS_PROXY              1
+#endif
 #if !defined(PARALLEL_OUTPUT_CHANNELS)
    #define PARALLEL_OUTPUT_CHANNELS      1
 #endif
