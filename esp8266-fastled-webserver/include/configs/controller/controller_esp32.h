@@ -23,7 +23,7 @@
 
 // Would need to define (and use) the additional DATA_PIN_x symbols,
 // and update the corresponding code using those symbols.
-static_assert(PARALLEL_OUTPUT_CHANNELS <= 4, "While ESP32 supporst 16 parallel outputs, currently only support four parallel outputs");
+static_assert(PARALLEL_OUTPUT_CHANNELS <= 4, "While ESP32 supports 16 parallel outputs, currently only support four parallel outputs");
 
 // TODO: consider using I2S (instead of RMT) on the ESP32:
 //

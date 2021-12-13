@@ -28,7 +28,8 @@
 
 #if 1 // external libraries
   #define ARDUINOJSON_DECODE_UNICODE 0 // don't need to decode Unicode to UTF-8
-  #define ARDUINOJSON_USE_LONG_LONG 1  // storing uint32_t requires this flag
+  // storing uint32_t requires this flag
+  #define ARDUINOJSON_USE_LONG_LONG 1
   #include "ArduinoJson.h"
 
   #define FASTLED_INTERNAL // no other way to suppress build warnings
