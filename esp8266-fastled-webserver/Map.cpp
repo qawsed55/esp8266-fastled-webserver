@@ -26,7 +26,7 @@
 //
 // 4. Convert the radial coordinates to cartesian (x/y) coordinates
 //
-// 5. Transform the coordinates, such as via following psuedo-code:
+// 5. Transform the coordinates, such as via following pseudo-code:
 //
 // ```C++
 // // first, translate from origin == center so left side and bottom aligned with X/Y axis
@@ -44,7 +44,7 @@
 // uint8_t coordsY[] = (uint8_t)(scaledY[] - 0.5); // subtract 0.5 to avoid bias
 // ```
 //
-// There appears to have been a concious decision to store the X/Y
+// There appears to have been a conscious decision to store the X/Y
 // values as 8-bit values.  Perhaps this was to allow for faster
 // (8-bit) math operations on lower-power MCUs?
 //
@@ -119,7 +119,7 @@
 #elif defined(PRODUCT_CHAMAELEON64)
   const uint8_t  coordsX[NUM_PIXELS]             { 255, 240, 234, 216, 221, 224, 204, 204, 201, 185, 196, 214, 228, 187, 188, 178, 156, 138, 129, 124, 127, 167, 175, 161, 146, 153, 141, 124, 105, 121, 127, 106, 106, 94, 89, 80, 74, 65, 54, 44, 26, 33, 38, 59, 80, 93, 103, 112, 14, 15, 5, 0, 4, 17, 42, 66, 81, 76, 53, 33, 37, 59, 63, 47 };
   const uint8_t  coordsY[NUM_PIXELS]             { 127, 155, 121, 122, 155, 191, 209, 175, 139, 105, 82, 60, 43, 165, 193, 135, 144, 142, 110, 75, 36, 171, 225, 199, 172, 244, 211, 161, 150, 194, 244, 255, 219, 187, 237, 209, 173, 233, 192, 216, 233, 187, 155, 150, 138, 105, 74, 40, 184, 154, 124, 90, 53, 19, 0, 9, 39, 80, 96, 76, 33, 30, 63, 57 };
-  const uint8_t  angles[NUM_PIXELS]              { 179, 192, 176, 175, 195, 212, 225, 210, 188, 158, 146, 141, 139, 211, 226, 187, 209, 233, 95, 85, 89, 226, 243, 244, 246, 256, 259, 274, 313, 274, 269, 278, 282, 298, 288, 299, 318, 299, 317, 312, 312, 326, 341, 340, 346, 31, 65, 79, 332, 345, 0, 15, 30, 43, 55, 61, 61, 41, 22, 27, 45, 54, 44, 40 };
+  const uint8_t  angles[NUM_PIXELS]              { 179, 192, 176, 175, 195, 212, 225, 210, 188, 158, 146, 141, 139, 211, 226, 187, 209, 233, 95, 85, 89, 226, 243, 244, 246, 1, 4, 19, 58, 19, 14, 23, 27, 43, 33, 44, 63, 44, 62, 57, 57, 71, 86, 85, 91, 31, 65, 79, 77, 90, 255, 15, 30, 43, 55, 61, 61, 41, 22, 27, 45, 54, 44, 40 };
   const uint8_t  radii[NUM_PIXELS]               { 206, 185, 168, 135, 150, 185, 178, 137, 107, 83, 122, 172, 213, 101, 134, 64, 32, 3, 0, 65, 137, 80, 172, 116, 59, 191, 126, 31, 28, 93, 186, 210, 144, 95, 185, 144, 99, 197, 150, 195, 241, 175, 141, 101, 57, 43, 77, 132, 204, 182, 196, 215, 236, 255, 253, 215, 153, 97, 118, 167, 210, 188, 137, 166 };
   static_assert(NUM_PIXELS == ARRAY_SIZE2(radii), "");
   static const uint8_t (&radiusProxy)[NUM_PIXELS] = radii;
