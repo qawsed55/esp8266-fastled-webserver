@@ -1362,7 +1362,7 @@ void swirlFibonacci() {
   CRGBPalette16 palette( gGradientPalettes[1] ); // es_rivendell_15_gp
 
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    float r = radiusProxy[i] / 256.0 * z;
+    float r = physicalToFibonacci[i] / 256.0 * z;
     float a = (angles[i] + (beat88(3*speed)>>3)) / 256.0 * TWO_PI;
     float v = r - p + d * sin(w * a + s * r * r);
     float c = 255 - b * pow(fabs(v), g);
