@@ -89,8 +89,7 @@ void dimAll(byte value)
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 
-// NOTE: HAS_POLAR_COORDS implies HAS_COORDINATE_MAP
-//       IS_FIBONACCI     implies HAS_COORDINATE_MAP
+// NOTE: IS_FIBONACCI implies HAS_COORDINATE_MAP
 
 const PatternAndName patterns[] = {
   { pride,                             "Pride" },

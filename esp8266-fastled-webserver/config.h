@@ -146,12 +146,6 @@
     #if IS_FIBONACCI && (!HAS_COORDINATE_MAP)
         #error "IS_FIBONACCI is true, so HAS_COORDINATE_MAP must also be true (but is not)"
     #endif
-    #if !defined(HAS_POLAR_COORDS) || ((HAS_POLAR_COORDS != 0) && (HAS_POLAR_COORDS != 1))
-        #error "HAS_POLAR_COORDS must be defined to zero or one"
-    #endif
-    #if HAS_POLAR_COORDS && (!HAS_COORDINATE_MAP)
-        #error "HAS_POLAR_COORDS is true, so HAS_COORDINATE_MAP must also be true (but is not)"
-    #endif
     #if !defined(PARALLEL_OUTPUT_CHANNELS)
         #error "PARALLEL_OUTPUT_CHANNELS must be defined"
     #elif (PARALLEL_OUTPUT_CHANNELS == 1)

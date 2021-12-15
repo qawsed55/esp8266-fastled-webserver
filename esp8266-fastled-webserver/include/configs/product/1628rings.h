@@ -59,10 +59,6 @@
 #if !defined(HAS_COORDINATE_MAP)
    #define HAS_COORDINATE_MAP            1
 #endif
-// TODO: combine HAS_POLAR_COORDS with HAS_COORDINATE_MAP
-#if !defined(HAS_POLAR_COORDS)
-   #define HAS_POLAR_COORDS              1
-#endif
 #if !defined(PARALLEL_OUTPUT_CHANNELS) // WARNING:  Refresh rate for 1628 pixels over single output is ~15 frames / second MAXIMUM....
    #define PARALLEL_OUTPUT_CHANNELS      1
 #endif

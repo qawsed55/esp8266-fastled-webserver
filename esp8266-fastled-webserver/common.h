@@ -225,10 +225,6 @@ extern CRGB leds[NUM_PIXELS];
   extern const uint8_t (&radiusProxy) [NUM_PIXELS];
 #endif
 
-#if HAS_POLAR_COORDS
-  extern const uint8_t  radii[NUM_PIXELS];  // needed in noise.cpp
-#endif
-
 #include "include/GradientPalettes.hpp"
 #include "include/Fields.hpp"
 #include "include/FSBrowser.hpp"

@@ -259,7 +259,7 @@ void paletteNoise() {
   drawNoise(palettes[currentPaletteIndex]);
 }
 
-// drawPolarNoise() uses angles[] and radii[]
+// drawPolarNoise() uses angles[] and radiusProxy[]
 void drawPolarNoise(CRGBPalette16 palette, uint8_t hueReduce = 0)
 {
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {

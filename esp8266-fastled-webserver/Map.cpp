@@ -1,6 +1,6 @@
 #include "common.h"
 
-#if HAS_COORDINATE_MAP // IS_FIBONACCI and HAS_POLAR_COORDS each imply HAS_COORDINATE_MAP
+#if HAS_COORDINATE_MAP // IS_FIBONACCI implies HAS_COORDINATE_MAP
 
 // Each Fibonacci board must define the following arrays:
 //
