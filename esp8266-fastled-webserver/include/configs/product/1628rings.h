@@ -48,10 +48,10 @@
    #define DEFAULT_COLOR_CORRECTION      UncorrectedColor // 1628-Rings did not specify; This is FastLED default
 #endif
 #if !defined(NAME_PREFIX)
-   #define NAME_PREFIX                   "ESP8266-"
+   #define NAME_PREFIX                   "sol-v2-"
 #endif
 #if !defined(PRODUCT_FRIENDLY_NAME)
-   #define PRODUCT_FRIENDLY_NAME         "ESP8266 FastLED Webserver"
+   #define PRODUCT_FRIENDLY_NAME         "Sol v2"
 #endif
 #if !defined(IS_FIBONACCI)
    #define IS_FIBONACCI                  0

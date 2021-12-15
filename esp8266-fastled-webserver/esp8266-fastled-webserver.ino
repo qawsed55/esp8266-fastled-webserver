@@ -142,10 +142,8 @@ const PatternAndName patterns[] = {
   { xGradientPalette,                  "X Axis Gradient Palette" },
   { yGradientPalette,                  "Y Axis Gradient Palette" },
   { xyGradientPalette,                 "XY Axis Gradient Palette" },
-#endif
 
-#if HAS_RADIUS_PROXY
-  // noise patterns (Polar variations)
+  // noise patterns
   { gradientPalettePolarNoise,         "Gradient Palette Polar Noise" },
   { palettePolarNoise,                 "Palette Polar Noise" },
   { firePolarNoise,                    "Fire Polar Noise" },
@@ -159,10 +157,9 @@ const PatternAndName patterns[] = {
   { oceanPolarNoise,                   "Ocean Polar Noise" },
   { blackAndWhitePolarNoise,           "Black & White Polar Noise" },
   { blackAndBluePolarNoise,            "Black & Blue Polar Noise" },
-#endif
 
-#if HAS_COORDINATE_MAP
-  // noise patterns
+  { gradientPaletteNoise,              "Gradient Palette Noise" },
+  { paletteNoise,                      "Palette Noise" },
   { fireNoise,                         "Fire Noise" },
   { fireNoise2,                        "Fire Noise 2" },
   { lavaNoise,                         "Lava Noise" },
@@ -174,11 +171,11 @@ const PatternAndName patterns[] = {
   { oceanNoise,                        "Ocean Noise" },
   { blackAndWhiteNoise,                "Black & White Noise" },
   { blackAndBlueNoise,                 "Black & Blue Noise" },
+  
+  { drawAnalogClock,                   "Analog Clock" },
 #endif
 
 #if IS_FIBONACCI
-  { drawAnalogClock,                   "Analog Clock" },
-
   { drawSpiralAnalogClock13,           "Spiral Analog Clock 13" },
   { drawSpiralAnalogClock21,           "Spiral Analog Clock 21" },
   { drawSpiralAnalogClock34,           "Spiral Analog Clock 34" },
@@ -733,7 +730,7 @@ void loop() {
   // Call the current pattern function once, updating the 'leds' array
   patterns[currentPatternIndex].pattern();
 
-  #if IS_FIBONACCI
+  #if HAS_COORDINATE_MAP
   if (showClock) drawAnalogClock();
   #endif
 
@@ -1365,7 +1362,7 @@ void swirlFibonacci() {
   CRGBPalette16 palette( gGradientPalettes[1] ); // es_rivendell_15_gp
 
   for (uint16_t i = 0; i < NUM_PIXELS; i++) {
-    float r = physicalToFibonacci[i] / 256.0 * z;
+    float r = radiusProxy[i] / 256.0 * z;
     float a = (angles[i] + (beat88(3*speed)>>3)) / 256.0 * TWO_PI;
     float v = r - p + d * sin(w * a + s * r * r);
     float c = 255 - b * pow(fabs(v), g);

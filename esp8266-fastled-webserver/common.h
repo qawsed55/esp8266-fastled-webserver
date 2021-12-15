@@ -219,17 +219,14 @@ extern CRGB leds[NUM_PIXELS];
 #endif
 
 #if HAS_COORDINATE_MAP
-  extern const uint8_t  coordsX [NUM_PIXELS];
-  extern const uint8_t  coordsY [NUM_PIXELS];
-  extern const uint8_t  angles  [NUM_PIXELS];
+  extern const uint8_t coordsX        [NUM_PIXELS];
+  extern const uint8_t coordsY        [NUM_PIXELS];
+  extern const uint8_t angles         [NUM_PIXELS];
+  extern const uint8_t (&radiusProxy) [NUM_PIXELS];
 #endif
 
 #if HAS_POLAR_COORDS
   extern const uint8_t  radii[NUM_PIXELS];  // needed in noise.cpp
-#endif
-
-#if HAS_RADIUS_PROXY
-  extern const uint8_t (&radiusProxy)[NUM_PIXELS];  // needed in noise.cpp
 #endif
 
 #include "include/GradientPalettes.hpp"
@@ -282,10 +279,11 @@ void radarSweepPalette();
 void radiusPalette();
 void angleGradientPalette();
 void radiusGradientPalette();
+void drawAnalogClock();
+void antialiasPixelAR(uint8_t angle, uint8_t dAngle, uint8_t startRadius, uint8_t endRadius, CRGB color, CRGB leds[] = leds, int _NUM_PIXELS = NUM_PIXELS);
 #endif
 // map.h -- only when product defines IS_FIBONACCI to be true
 #if IS_FIBONACCI
-void drawAnalogClock();
 void drawSpiralAnalogClock13();
 void drawSpiralAnalogClock21();
 void drawSpiralAnalogClock34();
@@ -294,10 +292,11 @@ void drawSpiralAnalogClock89();
 void drawSpiralAnalogClock21and34();
 void drawSpiralAnalogClock13_21_and_34();
 void drawSpiralAnalogClock34_21_and_13();
-void antialiasPixelAR(uint8_t angle, uint8_t dAngle, uint8_t startRadius, uint8_t endRadius, CRGB color, CRGB leds[] = leds, int _NUM_PIXELS = NUM_PIXELS);
 #endif
 
 // noise.h -- always defined
+void paletteNoise();
+void gradientPaletteNoise();
 void rainbowNoise();
 void rainbowStripeNoise();
 void partyNoise();
@@ -310,8 +309,6 @@ void oceanNoise();
 void blackAndWhiteNoise();
 void blackAndBlueNoise();
 
-// noise.h -- only when product defines HAS_RADIUS_PROXY to be true
-#if HAS_RADIUS_PROXY
 void palettePolarNoise();
 void gradientPalettePolarNoise();
 void rainbowPolarNoise();
@@ -325,7 +322,8 @@ void lavaPolarNoise();
 void oceanPolarNoise();
 void blackAndWhitePolarNoise();
 void blackAndBluePolarNoise();
-#endif
+
+
 
 // pacifica.h / prideplayground.h / colorwavesplayground.h
 void pacifica_loop();

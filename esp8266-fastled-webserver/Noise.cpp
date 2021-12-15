@@ -88,9 +88,6 @@ static uint16_t noisescale = 1; // scale is set dynamically once we've started u
 
 static uint8_t colorLoop = 0;
 
-
-
-
 static const CRGBPalette16 blackAndWhiteStripedPalette {
   CRGB::White, CRGB::Black, CRGB::Black, CRGB::Black,
   CRGB::White, CRGB::Black, CRGB::Black, CRGB::Black,
@@ -244,8 +241,23 @@ void blackAndBlueNoise() {
   drawNoise(blackAndBlueStripedPalette);
 }
 
+void gradientPaletteNoise() {
+  noisespeedx = 4;
+  noisespeedy = 0;
+  noisespeedz = 0;
+  noisescale = 1;
+  colorLoop = 0;
+  drawNoise(gCurrentPalette);
+}
 
-#if HAS_RADIUS_PROXY
+void paletteNoise() {
+  noisespeedx = 4;
+  noisespeedy = 0;
+  noisespeedz = 0;
+  noisescale = 1;
+  colorLoop = 0;
+  drawNoise(palettes[currentPaletteIndex]);
+}
 
 // drawPolarNoise() uses angles[] and radii[]
 void drawPolarNoise(CRGBPalette16 palette, uint8_t hueReduce = 0)
@@ -390,8 +402,5 @@ void lavaPolarNoise() {
   colorLoop = 0;
   drawPolarNoise(LavaColors_p);
 }
-
-#endif
-
 
 #endif // HAS_COORDINATE_MAP
