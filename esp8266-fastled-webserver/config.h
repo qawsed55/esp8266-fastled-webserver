@@ -26,6 +26,7 @@
 
 #if !defined(BUILDING_USING_PLATFORMIO)
     #define PRODUCT_DEFAULT
+    // #define PRODUCT_FIBONACCI1024
     // #define PRODUCT_FIBONACCI512
     // #define PRODUCT_FIBONACCI256
     // #define PRODUCT_FIBONACCI128
@@ -72,6 +73,8 @@
         #include "./include/configs/product/fibonacci256.h"
     #elif defined(PRODUCT_FIBONACCI512)
         #include "./include/configs/product/fibonacci512.h"
+    #elif defined(PRODUCT_FIBONACCI1024)
+        #include "./include/configs/product/fibonacci1024.h"
     #elif defined(PRODUCT_ESP8266_THING) // aka parallel
         #include "./include/configs/product/esp8266_thing.h"
     #else
@@ -152,6 +155,8 @@
         // nothing to test here
     #elif (PARALLEL_OUTPUT_CHANNELS == 4)
         static_assert(NUM_PIXELS == (PIXELS_ON_DATA_PIN_1 + PIXELS_ON_DATA_PIN_2 + PIXELS_ON_DATA_PIN_3 + PIXELS_ON_DATA_PIN_4), "");
+    #elif (PARALLEL_OUTPUT_CHANNELS == 5)
+        static_assert(NUM_PIXELS == (PIXELS_ON_DATA_PIN_1 + PIXELS_ON_DATA_PIN_2 + PIXELS_ON_DATA_PIN_3 + PIXELS_ON_DATA_PIN_4 + PIXELS_ON_DATA_PIN_5), "");
     #elif (PARALLEL_OUTPUT_CHANNELS == 6)
         static_assert(NUM_PIXELS == (PIXELS_ON_DATA_PIN_1 + PIXELS_ON_DATA_PIN_2 + PIXELS_ON_DATA_PIN_3 + PIXELS_ON_DATA_PIN_4 + PIXELS_ON_DATA_PIN_5 + PIXELS_ON_DATA_PIN_6), "");
     #else
