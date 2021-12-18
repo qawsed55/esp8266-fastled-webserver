@@ -29,6 +29,8 @@ uint8_t setUtcOffsetIndex(uint8_t value);
 String getFieldValue(String name);
 String setFieldValue(String name, String value);
 String getFieldsJson();
-
+String getFieldsWithoutOptionsJson();
+String getPatternsJson();
+String getPalettesJson();
 
 #endif

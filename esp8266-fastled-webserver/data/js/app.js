@@ -124,7 +124,7 @@ $(document).ready(function() {
     $("#textareaFields").val(JSON.stringify(json, null, 2));
   }
 
-  $.get(urlBase + "all", function(data) {
+  $.get(urlBase + "fieldsWithoutOptions", function(data) {
       $("#status").html("Loading, please wait...");
 
       allData = data;
@@ -135,7 +135,10 @@ $(document).ready(function() {
         } else if (field.type == "Boolean") {
           addBooleanField(field);
         } else if (field.type == "Select") {
-          addSelectField(field);
+          $.get(`${urlBase}${field.name}Options`, function(selectData) {
+            field.options = selectData;
+            addSelectField(field, index);
+          });
         } else if (field.type == "Color") {
           addColorFieldPalette(field);
           addColorFieldPicker(field);
@@ -246,7 +249,7 @@ function addBooleanField(field) {
   $("#form").append(template);
 }
 
-function addSelectField(field) {
+function addSelectField(field, index) {
   var template = $("#selectTemplate").clone();
 
   template.attr("id", "form-group-" + field.name);
@@ -298,8 +301,13 @@ function addSelectField(field) {
     select.val(value);
     postValue(field.name, value);
   });
+  
+  if (index === 0) {
+    $("#form").prepend(template);
+  } else {
+    $(`#form > div:nth-child(${index})`).after(template);
+  }
 
-  $("#form").append(template);
 }
 
 function addUtcOffsetIndexField(field) {

@@ -420,6 +420,32 @@ inline namespace {
     return result;
   }
 
+  template <size_t N>
+  String getFieldsWithoutOptionsJson(const Field (&fields)[N]) {
+    String json = "[";
+    for (uint8_t i = 0; i < N; i++) {
+      Field field = fields[i];
+      json += "{\"name\":\"" + field.name + "\",\"label\":\"" + field.label + "\",\"type\":\"" + ToString(field.type) + "\"";
+      if(field.getValue) {
+        if (field.type == Field_t::Color || field.type == Field_t::String || field.type == Field_t::Label) {
+          json += ",\"value\":\"" + field.getValue() + "\"";
+        }
+        else {
+          json += ",\"value\":" + field.getValue();
+        }
+      }
+      if (field.type == Field_t::Number || field.type == Field_t::UtcOffset) {
+        json += ",\"min\":" + String(field.min);
+        json += ",\"max\":" + String(field.max);
+      }
+      json += "}";
+      if (i < N - 1)
+        json += ",";
+    }
+    json += "]";
+    return json;
+  }
+
   // name, label, type, min, max, getValue, getOptions, setValue
   // only items that use the 'getOptions': patterns and palettes
   // only items that support 'setValue': options used for pridePlayground
@@ -530,6 +556,33 @@ uint8_t brightness = brightnessMap[brightnessIndex];
 // the built-in webserver to generate UI to adjust these options.
 String getFieldsJson() {
   return getFieldsJson(fields);
+}
+
+// lists all the fields, but does not include select field options
+String getFieldsWithoutOptionsJson() {
+  return getFieldsWithoutOptionsJson(fields);
+}
+
+String getPatternsJson() {
+  String json = "[";
+  for (uint8_t i = 0; i < patternCount; i++) {
+    json += "\"" + patterns[i].name + "\"";
+    if (i < patternCount - 1)
+      json += ",";
+  }
+  json += "]";
+  return json;
+}
+
+String getPalettesJson() {
+  String json = "[";
+  for (uint8_t i = 0; i < paletteCount; i++) {
+    json += "\"" + paletteNames[i] + "\"";
+    if (i < paletteCount - 1)
+      json += ",";
+  }
+  json += "]";
+  return json;
 }
 
 // getFieldValue() is used to get a current value for the 
