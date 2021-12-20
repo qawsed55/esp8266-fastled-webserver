@@ -46,3 +46,4 @@ jobs:
           path: |
             .pio/build/*/firmware.bin
             .pio/build/*/firmware.elf
+            .pio/build/*/littlefs.bin
