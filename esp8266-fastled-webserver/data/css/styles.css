@@ -6,6 +6,10 @@ body {
   text-align: right;
 }
 
+.infoDtTemplate {
+  text-align: right;
+}
+
 .btn-color {
   width: 40px;
 }

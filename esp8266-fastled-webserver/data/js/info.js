@@ -40,6 +40,15 @@ const keyToName = {
 $(document).ready(function () {
   $("#status").html("Connecting, please wait...");
 
+  // get product name for main page
+  $.get(urlBase + "product", function (data) {
+    const name = data['productName'];
+    // Set overall page title
+    $(document).attr("title", name + " by EvilGenius Labs");
+    // Set text of element with id 'product'
+    $("#product").text(name);
+  });
+
   $.get(urlBase + "info", function (data) {
     $("#status").html("Loading, please wait...");
 
