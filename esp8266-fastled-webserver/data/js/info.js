@@ -34,7 +34,7 @@ const keyToName = {
   softAPSSID: "Soft AP SSID",
   softAPIP: "Soft AP IP Address",
   BSSID: "BSSID",
-  softAPmacAddress: "Soft AP MAC Address",
+  softAPMacAddress: "Soft AP MAC Address",
 };
 
 $(document).ready(function () {
@@ -53,8 +53,8 @@ $(document).ready(function () {
     $("#status").html("Loading, please wait...");
 
     Object.keys(data).forEach((key) => {
-      var dtTemplate = $("#infoDtTemplate").clone();
-      var ddTemplate = $("#infoDdTemplate").clone();
+      var dt = $("#infoDtTemplate").clone();
+      var dd = $("#infoDdTemplate").clone();
 
       const name = keyToName[key] || key;
       let value = data[key];
@@ -78,11 +78,14 @@ $(document).ready(function () {
           break;
       }
 
-      dtTemplate.html(name);
-      ddTemplate.html(value);
+      dt.attr("id", `dt-${key}`);
+      dt.html(name);
 
-      $("#infoDl").append(dtTemplate);
-      $("#infoDl").append(ddTemplate);
+      dd.attr("id", `dd-${key}`);
+      dd.html(value);
+
+      $("#infoDl").append(dt);
+      $("#infoDl").append(dd);
     });
   });
 

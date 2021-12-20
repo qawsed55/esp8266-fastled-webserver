@@ -20,9 +20,19 @@
   <link rel="stylesheet" href="css/styles.css">
 
   <link rel="icon" href="images/atom196.png">
+
+  <style>
+    .col-form-label {
+      text-align: right;
+    }
+
+    .btn-color {
+      width: 40px;
+    }
+  </style>
 </head>
 
-<body>
+<body style="padding-bottom: 80px;">
 
   <nav class="navbar navbar-expand-md navbar-light bg-light mb-4" id="top" role="banner">
     <div class="container-fluid">
@@ -73,15 +83,15 @@
             <div class="btn-toolbar" role="toolbar">
               <div class="btn-group me-2" role="group">
                 <button type="button" class="btn btn-outline-secondary" id="btnExport">
-                  <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>
+                  <i class="bi bi-download"></i>
                   Load Values
                 </button>
                 <button type="button" class="btn btn-outline-secondary" id="btnImport">
-                  <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                  <i class="bi bi-upload"></i>
                   Set Values
                 </button>
                 <button type="button" class="btn btn-outline-secondary" id="btnCopy">
-                  <span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
+                  <i class="bi bi-clipboard"></i>
                   Copy
                 </button>
               </div>
@@ -96,14 +106,14 @@
                 <div class="input-group">
                   <input id="inputFilename" type="text" class="form-control" style="width: 180px;" value="preset1.json" />
                   <button type="button" class="btn btn-outline-secondary" id="btnSave">
-                    <span class="glyphicon glyphicon-save" aria-hidden="true"></span>
+                    <i class="bi bi-save"></i>
                     Save
                   </button>
 
                   <input type="file" id="inputFile" style="display: none;" />
 
                   <button type="button" class="btn btn-outline-secondary" id="btnOpen">
-                    <span class="glyphicon glyphicon-open" aria-hidden="true"></span>
+                    <i class="bi bi-folder2-open"></i>
                     Open
                   </button>
                 </div>
