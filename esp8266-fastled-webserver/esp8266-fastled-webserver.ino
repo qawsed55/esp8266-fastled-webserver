@@ -113,14 +113,13 @@ const PatternAndName patterns[] = {
 #endif
 
   { wheel,                             "Wheel" },
+  { pacifica_loop,                     "Pacifica" },
 
 #if IS_FIBONACCI
   { swirlFibonacci,                    "Swirl Fibonacci"},
   { fireFibonacci,                     "Fire Fibonacci" },
   { waterFibonacci,                    "Water Fibonacci" },
   { emitterFibonacci,                  "Emitter Fibonacci" },
-
-  { pacifica_loop,                     "Pacifica" },
   { pacifica_fibonacci_loop,           "Pacifica Fibonacci" },
 #endif
 
