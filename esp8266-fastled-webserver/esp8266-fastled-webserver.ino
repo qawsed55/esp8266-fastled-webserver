@@ -121,6 +121,7 @@ const PatternAndName patterns[] = {
   { waterFibonacci,                    "Water Fibonacci" },
   { emitterFibonacci,                  "Emitter Fibonacci" },
   { pacifica_fibonacci_loop,           "Pacifica Fibonacci" },
+  { fibonacciStars,                    "Fibonacci Stars" },
 #endif
 
 #if HAS_COORDINATE_MAP // really a wrong name... and likely doing way more computation than necessary
