@@ -1,10 +1,10 @@
 // used when hosting the site on the ESP8266
-var address = location.hostname;
-var urlBase = "";
+// var address = location.hostname;
+// var urlBase = "";
 
 // used when hosting the site somewhere other than the ESP8266 (handy for testing without waiting forever to upload to SPIFFS/LittleFS)
-// var address = "192.168.86.36";
-// var urlBase = "http://" + address + "/";
+var address = "192.168.86.36";
+var urlBase = "http://" + address + "/";
 
 var postColorTimer = {};
 var postValueTimer = {};
@@ -25,18 +25,32 @@ var ignoreColorChange = false;
 
 var allData = {};
 
+function displayProductName(name) {
+    // Set overall page title
+    $(document).attr("title", name + " by Evil Genius Labs");
+    // Set text of element with id 'product'
+    $("#product").text(name);
+}
+
 $(document).ready(function() {
   $("#status").html("Connecting, please wait...");
 
   // info gathers a lot more information ...
   // just need product name for main page.
-  $.get(urlBase + "product", function (data) {
-    const name = data['productName'];
-    // Set overall page title
-    $(document).attr("title", name + " by EvilGenius Labs");
-    // Set text of element with id 'product'
-    $("#product").text(name);
-  });
+  fetch(`${urlBase}product`).then(response => {
+      if (!response.ok) {
+        console.error(`Failed getting product: ${response.status} ${response.statusText}`);
+        return;
+      }
+      response.json().then(data => {
+        const name = data?.productName;
+        displayProductName(name);
+      }).catch(reason => {
+        console.error(`Failed getting product: ${reason}`);
+        return;
+      });
+    }
+  );
 
   $("#btnTop").click(function () {
     $([document.documentElement, document.body]).animate(
@@ -125,46 +139,48 @@ $(document).ready(function() {
   }
 
   $.get(urlBase + "all", function(data) {
-      $("#status").html("Loading, please wait...");
+    $("#status").html("Loading, please wait...");
 
-      allData = data;
+    allData = data;
 
-      $.each(data, function(index, field) {
-        if (field.type == "Number") {
-          addNumberField(field);
-        } else if (field.type == "Boolean") {
-          addBooleanField(field);
-        } else if (field.type == "Select") {
-          addSelectField(field);
-        } else if (field.type == "Color") {
-          addColorFieldPalette(field);
-          addColorFieldPicker(field);
-        } else if (field.type == "Section") {
-          addSectionField(field);
-        } else if (field.type == "String") {
-          addStringField(field, false);
-        } else if (field.type == "Label") {
-          addStringField(field, true);
-        } else if (field.type == "UtcOffsetIndex") {
-          addUtcOffsetIndexField(field, true);
-        }
-      });
-
-      $(".minicolors").minicolors({
-        theme: "bootstrap",
-        changeDelay: 200,
-        control: "wheel",
-        format: "rgb",
-        inline: true
-      });
-
-      $("#accordionImportExport").show();
-
-      $("#status").html("Ready");
-    })
-    .fail(function(errorThrown) {
-      console.log(errorThrown);
+    data.forEach((field, index) => {
+      if (field.name === "name") {
+        displayProductName(field.value);
+      } else if (field.type == "Number") {
+        addNumberField(field);
+      } else if (field.type == "Boolean") {
+        addBooleanField(field);
+      } else if (field.type == "Select") {
+        addSelectField(field);
+      } else if (field.type == "Color") {
+        addColorFieldPalette(field);
+        addColorFieldPicker(field);
+      } else if (field.type == "Section") {
+        addSectionField(field);
+      } else if (field.type == "String") {
+        addStringField(field, false);
+      } else if (field.type == "Label") {
+        addStringField(field, true);
+      } else if (field.type == "UtcOffsetIndex") {
+        addUtcOffsetIndexField(field, true);
+      }
     });
+
+    $(".minicolors").minicolors({
+      theme: "bootstrap",
+      changeDelay: 200,
+      control: "wheel",
+      format: "rgb",
+      inline: true
+    });
+
+    $("#accordionImportExport").show();
+
+    $("#status").html("Ready");
+  })
+  .fail(function(errorThrown) {
+    console.log(errorThrown);
+  });
 });
 
 function addNumberField(field) {
