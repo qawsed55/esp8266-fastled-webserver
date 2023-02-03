@@ -24,13 +24,13 @@
    #define LED_TYPE                      WS2811
 #endif
 #if !defined(COLOR_ORDER)
-   #define COLOR_ORDER                   RGB
+   #define COLOR_ORDER                   BRG
 #endif
 #if !defined(NUM_PIXELS)
-   #define NUM_PIXELS                    200
+   #define NUM_PIXELS                    309
 #endif
 #if !defined(AVAILABLE_MILLI_AMPS)
-   #define AVAILABLE_MILLI_AMPS          2000 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
+   #define AVAILABLE_MILLI_AMPS          8000 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
 #endif
 #if !defined(MAX_MILLI_AMPS_PER_PIXEL)
    #define MAX_MILLI_AMPS_PER_PIXEL      60   // IMPORTANT: set to larger value if necessary
@@ -45,7 +45,7 @@
    #define DEFAULT_BRIGHTNESS_INDEX      3
 #endif
 #if !defined(DEFAULT_COLOR_CORRECTION)
-   #define DEFAULT_COLOR_CORRECTION      TypicalLEDStrip
+   #define DEFAULT_COLOR_CORRECTION      TypicalSMD5050
 #endif
 #if !defined(NAME_PREFIX)
    #define NAME_PREFIX                   "ESP8266-"
