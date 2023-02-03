@@ -58,6 +58,18 @@ uint8_t speed = 30;
 
 uint8_t gCurrentPaletteNumber = 0;
 
+
+
+uint16_t FireMapShifted[NUM_PIXELS];
+uint8_t shifting = 1;   //сдвиг массива координат по ленте
+uint8_t shiftSpeed = 10;
+unsigned long shiftTimeout = 0;
+
+
+
+
+
+
 CRGBPalette16 gCurrentPalette( CRGB::Black);
 CRGBPalette16 gTargetPalette( gGradientPalettes[0] );
 
@@ -71,7 +83,7 @@ unsigned long autoPlayTimeout = 0;
 
 uint8_t showClock = 0;
 uint8_t clockBackgroundFade = 160;
-uint8_t utcOffsetIndex = 24; // map(-6, -12, 14, 0, 104); -12 to 14 in 15 minute increments, mapped to 0 to 104
+uint8_t utcOffsetIndex = 56; // map(-6, -12, 14, 0, 104); -12 to 14 in 15 minute increments, mapped to 0 to 104
 
 uint8_t currentPaletteIndex = 0;
 
@@ -93,6 +105,11 @@ void dimAll(byte value)
 
 const PatternAndName patterns[] = {
   { pride,                             "Pride" },
+  { pride11,                           "Pride11" },
+  { fireRun,                           "Fire running" },
+  { waterRun,                          "Water running" },
+  { fireShifted,                       "Fire Shifted" },
+  { waterShifted,                      "Water Shifted" },
 #if IS_FIBONACCI
   { prideFibonacci,                    "Pride Fibonacci" },
 #endif
@@ -267,6 +284,7 @@ const String paletteNames[paletteCount] = {
 void setup() {
   WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP    
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
+  WiFi.persistent(false); // запрещает запись в последние три сектора флеш, чтобы не затирать его до дырки
 
   Serial.begin(115200);
   Serial.setDebugOutput(true);
@@ -613,6 +631,7 @@ void setup() {
 
   autoPlayTimeout = millis() + (autoplayDuration * 1000);
   timeClient.begin();
+
 }
 
 void sendInt(uint8_t value)
@@ -1032,14 +1051,14 @@ void bpm()
 
 void juggle()
 {
-  static uint8_t    numdots =   4; // Number of dots in use.
-  static uint8_t   faderate =   2; // How long should the trails be. Very low value = longer trails.
+  static uint8_t    numdots =   3; // Number of dots in use.
+  static uint8_t   faderate =   4; // How long should the trails be. Very low value = longer trails.
   static uint8_t     hueinc =  255 / numdots - 1; // Incremental change in hue between each dot.
   static uint8_t    thishue =   0; // Starting hue.
   static uint8_t     curhue =   0; // The current hue
   static uint8_t    thissat = 255; // Saturation of the colour.
   static uint8_t thisbright = 255; // How bright should the LED/display be.
-  static uint8_t   basebeat =   5; // Higher = faster movement.
+  static uint8_t   basebeat =   4; // Higher = faster movement.
 
  static uint8_t lastSecond =  99;  // Static variable, means it's only defined once. This is our 'debounce' variable.
   uint8_t secondHand = (millis() / 1000) % 30; // IMPORTANT!!! Change '30' to a different value to change duration of the loop.
@@ -1130,6 +1149,53 @@ void fillWithPride(bool useFibonacciOrder)
     nblend( leds[pixelnumber], newcolor, 64);
   }
 }
+
+
+
+
+
+void pride11() {  //спокойный
+  static uint16_t sPseudotime = 0;
+  static uint16_t sLastMillis = 0;
+  static uint16_t sHue16 = 0;
+
+  uint8_t sat8 = beatsin88( 88 * 2, 195, 238);
+  uint8_t brightdepth = beatsin88( 251 * 2, 12, 217); //( 341, 96, 224);
+  uint16_t brightnessthetainc16 = beatsin88( 202, (197 * 256), (221 * 256));
+  uint8_t msmultiplier = beatsin88(13, 112, 190);
+
+  uint16_t hue16 = sHue16;//gHue * 256;
+  uint16_t hueinc16 = beatsin88(10, 9, 8);
+
+  uint16_t ms = millis();
+  uint16_t deltams = ms - sLastMillis ;
+  sLastMillis  = ms;
+  sPseudotime += deltams * msmultiplier;
+  sHue16 += deltams * beatsin88( 10, 9, 26); //400, 5, 9
+  uint16_t brightnesstheta16 = sPseudotime;
+
+  for ( uint16_t i = 0 ; i < NUM_PIXELS; i++) {
+    hue16 += hueinc16;
+    uint8_t hue8 = hue16 / 256;
+
+    brightnesstheta16  += brightnessthetainc16;
+    uint16_t b16 = sin16( brightnesstheta16  ) + 32768;
+
+    uint16_t bri16 = (uint32_t)((uint32_t)b16 * (uint32_t)b16) / 65536;
+    uint8_t bri8 = (uint32_t)(((uint32_t)bri16) * brightdepth) / 65536;
+    bri8 += (255 - brightdepth);
+    CRGB newcolor = CHSV( hue8, sat8, bri8);
+
+    uint16_t pixelnumber = i;
+    pixelnumber = leds[(NUM_PIXELS - 1) - pixelnumber];
+    nblend(leds[pixelnumber], newcolor, 64);
+  }
+}
+
+
+
+
+
 void pride() {
   fillWithPride(false);
 }
@@ -1198,7 +1264,7 @@ void heatMap(const CRGBPalette16& palette, bool up)
 
   // Step 1.  Cool down every cell a little
   for ( uint16_t i = 0; i < NUM_PIXELS; i++) {
-    heat[i] = qsub8( heat[i],  random8(0, ((cooling * 10) / NUM_PIXELS) + 2));
+    heat[i] = qsub8( heat[i],  random8(0, ((cooling * 12) / NUM_PIXELS) + 2));
   }
 
   // Step 2.  Heat from each cell drifts 'up' and diffuses a little
@@ -1228,6 +1294,150 @@ void heatMap(const CRGBPalette16& palette, bool up)
     }
   }
 }
+
+
+
+
+void fireShifted(){
+  heatMapShifted(HeatColors_p);
+}
+
+void waterShifted(){
+  heatMapShifted(IceColors_p);
+}
+
+
+
+void heatMapShifted(const CRGBPalette16& palette)
+{
+  fill_solid(leds, NUM_PIXELS, CRGB::Black);
+  // memset(FireMap, 0, sizeof(FireMap));
+  // Modify random number generator seed; we use a lot of it.  (Note: this is still deterministic)
+  random16_add_entropy(random(256));
+
+  // Array of temperature readings at each simulation cell
+  static byte heat[NUM_PIXELS];
+
+  byte colorindex;
+
+  // Step 1.  Cool down every cell a little
+  for ( uint16_t i = 0; i < NUM_PIXELS; i++) {
+    heat[i] = qsub8( heat[i],  random8(0, ((cooling * 12) / NUM_PIXELS) + 2));
+  }
+
+  // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+  for ( uint16_t k = NUM_PIXELS - 1; k >= 2; k--) {
+    heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+  }
+
+  // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+  if ( random8() < sparking ) {
+    int y = random8(7);
+    heat[y] = qadd8( heat[y], random8(160, 255) );
+  }
+
+  // Step 4.  Map from heat cells to LED colors
+  for ( uint16_t j = 0; j < NUM_PIXELS; j++) {
+    // Scale the heat value from 0-255 down to 0-240
+    // for best results with color palettes.
+    colorindex = scale8(heat[j], 190);
+
+    CRGB color = ColorFromPalette(palette, colorindex);
+
+      leds[FireMap[j]]  = color;
+      leds [FireMap[(NUM_PIXELS - 1) - j]] = color;
+    
+  }
+}
+
+
+void fireRun(){
+  heatMapRunning(HeatColors_p, true);
+}
+
+void waterRun(){
+  heatMapRunning(IceColors_p, false);
+}
+
+
+void heatMapRunning(const CRGBPalette16& palette, bool left)
+{
+  fill_solid(leds, NUM_PIXELS, CRGB::Black);
+
+  // Modify random number generator seed; we use a lot of it.  (Note: this is still deterministic)
+  random16_add_entropy(random(256));
+
+  // Array of temperature readings at each simulation cell
+  static byte heat[NUM_PIXELS];
+
+  byte colorindex;
+
+  // Step 1.  Cool down every cell a little
+  for ( uint16_t i = 0; i < NUM_PIXELS; i++) {
+    heat[i] = qsub8( heat[i],  random8(0, ((cooling * 10) / NUM_PIXELS) + 2));
+  }
+
+  // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+  for ( uint16_t k = NUM_PIXELS - 1; k >= 2; k--) {
+    heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+  }
+
+  // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+  if ( random8() < sparking ) {
+    int y = random8(7);
+    heat[y] = qadd8( heat[y], random8(160, 255) );
+  }
+
+  // Step 4.  Map from heat cells to LED colors
+  for (uint16_t j = 0; j < NUM_PIXELS; j++)  {
+    // Scale the heat value from 0-255 down to 0-240
+    // for best results with color palettes.
+    colorindex = scale8(heat[j], 190);
+
+    CRGB color = ColorFromPalette(palette, colorindex);
+
+    leds[FireMapShifted[j]] = color;
+    leds[FireMapShifted[(NUM_PIXELS - 1) - j]] = color;
+  }
+
+  EVERY_N_MILLISECONDS(1 / speed * 30000) {
+    if (left) {
+      int tempVar = FireMapShifted[NUM_PIXELS - 1];
+        for (int i = NUM_PIXELS - 1; i > 0; i--) {
+        FireMapShifted[i] = FireMapShifted[i - 1];
+         //Serial.print(FireMapShifted[i]);Serial.print( F(", ") ); 
+        }
+       FireMapShifted[0] = tempVar;
+    } else {
+      FireMapShifted[NUM_PIXELS-1] = FireMapShifted[0];
+        for (int i = 0; i < NUM_PIXELS; i++) {
+        FireMapShifted[i] = FireMapShifted[i + 1];
+         //Serial.print(FireMapShifted[i]);Serial.print( F(", ") ); 
+        }
+  // Serial.println();
+  // Serial.print(F("Shift every")); Serial.println(1 / speed * 30000);
+      }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void addGlitter( uint8_t chanceOfGlitter)
 {
